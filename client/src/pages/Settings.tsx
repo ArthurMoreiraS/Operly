@@ -17,7 +17,7 @@ export default function Settings() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ["/api/settings"],
     queryFn: async () => {
-      const response = await fetch("/api/settings");
+      const response = await fetch("/api/settings", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch settings");
       return response.json();
     },
@@ -53,6 +53,7 @@ export default function Settings() {
       const response = await fetch("/api/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to update settings");

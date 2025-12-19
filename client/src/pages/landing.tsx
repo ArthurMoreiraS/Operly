@@ -20,20 +20,23 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
           <span className="text-xl font-bold tracking-tight text-white">Operly</span>
         </div>
         
-        <div className="flex items-center gap-4">
-          <button 
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Button 
+            variant="ghost"
+            size="sm" 
             onClick={onLoginClick}
-            className="hidden md:block text-sm text-muted-foreground hover:text-white transition-colors cursor-pointer" 
+            className="text-sm text-muted-foreground hover:text-white transition-colors px-3" 
             data-testid="link-login"
           >
             Login
-          </button>
+          </Button>
           <Button 
             size="sm" 
-            className="rounded-full px-6 bg-white/10 hover:bg-white/20 text-white border border-white/5"
+            className="rounded-full px-4 sm:px-6 bg-white/10 hover:bg-white/20 text-white border border-white/5 text-xs sm:text-sm"
             onClick={scrollToForm}
           >
-            Fale com a equipe
+            <span className="hidden sm:inline">Fale com a equipe</span>
+            <span className="sm:hidden">Contato</span>
           </Button>
         </div>
       </div>

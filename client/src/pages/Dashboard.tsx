@@ -57,7 +57,7 @@ export default function Dashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
     queryFn: async () => {
-      const response = await fetch("/api/dashboard/stats");
+      const response = await fetch("/api/dashboard/stats", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch stats");
       return response.json();
     },
@@ -67,7 +67,7 @@ export default function Dashboard() {
     queryKey: ["/api/appointments", "today"],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
-      const response = await fetch(`/api/appointments?date=${today}`);
+      const response = await fetch(`/api/appointments?date=${today}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch appointments");
       return response.json();
     },

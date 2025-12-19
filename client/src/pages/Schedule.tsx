@@ -64,7 +64,7 @@ export default function Schedule() {
     queryKey: ["/api/appointments", format(selectedDate, 'yyyy-MM-dd')],
     queryFn: async () => {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const response = await fetch(`/api/appointments?date=${dateStr}`);
+      const response = await fetch(`/api/appointments?date=${dateStr}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch appointments");
       return response.json();
     },
@@ -73,7 +73,7 @@ export default function Schedule() {
   const { data: customers } = useQuery({
     queryKey: ["/api/customers"],
     queryFn: async () => {
-      const response = await fetch("/api/customers");
+      const response = await fetch("/api/customers", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch customers");
       return response.json();
     },
@@ -82,7 +82,7 @@ export default function Schedule() {
   const { data: services } = useQuery({
     queryKey: ["/api/services"],
     queryFn: async () => {
-      const response = await fetch("/api/services");
+      const response = await fetch("/api/services", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch services");
       return response.json();
     },
@@ -92,7 +92,7 @@ export default function Schedule() {
     queryKey: ["/api/vehicles", formData.customerId],
     queryFn: async () => {
       if (!formData.customerId) return [];
-      const response = await fetch(`/api/vehicles?customerId=${formData.customerId}`);
+      const response = await fetch(`/api/vehicles?customerId=${formData.customerId}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch vehicles");
       return response.json();
     },
@@ -103,6 +103,7 @@ export default function Schedule() {
     mutationFn: async (data: any) => {
       const response = await fetch("/api/appointments", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -124,6 +125,7 @@ export default function Schedule() {
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
       const response = await fetch(`/api/appointments/${id}`, {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });

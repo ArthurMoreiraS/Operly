@@ -16,8 +16,8 @@ interface Lead {
   id: number;
   name: string;
   email: string;
-  phone: string;
-  businessName: string;
+  whatsapp: string;
+  teamSize: string | null;
   status: string;
   createdAt: string;
 }
@@ -135,10 +135,12 @@ export default function Leads() {
                           </div>
                           <div>
                             <p className="font-medium text-white">{lead.name}</p>
-                            <div className="flex items-center gap-1 text-gray-400 text-sm">
-                              <Building2 className="w-3 h-3" />
-                              {lead.businessName}
-                            </div>
+                            {lead.teamSize && (
+                              <div className="flex items-center gap-1 text-gray-400 text-sm">
+                                <Building2 className="w-3 h-3" />
+                                {lead.teamSize}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -146,7 +148,7 @@ export default function Leads() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-sm text-gray-300">
                             <Phone className="w-3 h-3" />
-                            {lead.phone}
+                            {lead.whatsapp}
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-400">
                             <Mail className="w-3 h-3" />
@@ -195,7 +197,7 @@ export default function Leads() {
                               <XCircle className="w-4 h-4 mr-2" />
                               Marcar como Perdido
                             </DropdownMenuItem>
-                            <Link href={`/admin/onboard?leadId=${lead.id}&name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&phone=${encodeURIComponent(lead.phone)}&business=${encodeURIComponent(lead.businessName)}`}>
+                            <Link href={`/admin/onboard?leadId=${lead.id}&name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&phone=${encodeURIComponent(lead.whatsapp)}&business=${encodeURIComponent(lead.teamSize || '')}`}>
                               <DropdownMenuItem className="cursor-pointer text-primary">
                                 <UserPlus className="w-4 h-4 mr-2" />
                                 Converter em Cliente

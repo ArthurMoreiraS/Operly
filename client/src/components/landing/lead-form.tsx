@@ -33,16 +33,37 @@ export function LeadForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
-    setIsSuccess(true);
-    toast({
-      title: "Solicitação recebida!",
-      description: "Nossa equipe entrará em contato em até 2 horas.",
-      duration: 5000,
-    });
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: values.name,
+          whatsapp: values.whatsapp,
+          email: values.email,
+          teamSize: values.size,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Erro ao enviar");
+      }
+      
+      setIsSuccess(true);
+      toast({
+        title: "Solicitação recebida!",
+        description: "Nossa equipe entrará em contato em até 2 horas.",
+        duration: 5000,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar sua solicitação. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (

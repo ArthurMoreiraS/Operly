@@ -70,7 +70,7 @@ export default function Services() {
   const { data: services, isLoading } = useQuery({
     queryKey: ["/api/services"],
     queryFn: async () => {
-      const response = await fetch("/api/services");
+      const response = await fetch("/api/services", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch services");
       return response.json();
     },
@@ -80,6 +80,7 @@ export default function Services() {
     mutationFn: async (data: any) => {
       const response = await fetch("/api/services", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -101,6 +102,7 @@ export default function Services() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       const response = await fetch(`/api/services/${id}`, {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -123,6 +125,7 @@ export default function Services() {
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/services/${id}`, {
         method: "DELETE",
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to delete service");
       return response.json();

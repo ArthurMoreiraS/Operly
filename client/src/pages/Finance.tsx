@@ -84,7 +84,7 @@ export default function Finance() {
   const { data: orders, isLoading } = useQuery({
     queryKey: ["/api/service-orders"],
     queryFn: async () => {
-      const response = await fetch("/api/service-orders");
+      const response = await fetch("/api/service-orders", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch service orders");
       return response.json();
     },
@@ -93,7 +93,7 @@ export default function Finance() {
   const { data: customers } = useQuery({
     queryKey: ["/api/customers"],
     queryFn: async () => {
-      const response = await fetch("/api/customers");
+      const response = await fetch("/api/customers", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch customers");
       return response.json();
     },
@@ -102,7 +102,7 @@ export default function Finance() {
   const { data: services } = useQuery({
     queryKey: ["/api/services"],
     queryFn: async () => {
-      const response = await fetch("/api/services");
+      const response = await fetch("/api/services", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch services");
       return response.json();
     },
@@ -112,7 +112,7 @@ export default function Finance() {
     queryKey: ["/api/vehicles", formData.customerId],
     queryFn: async () => {
       if (!formData.customerId) return [];
-      const response = await fetch(`/api/customers/${formData.customerId}/vehicles`);
+      const response = await fetch(`/api/customers/${formData.customerId}/vehicles`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch vehicles");
       return response.json();
     },
@@ -123,6 +123,7 @@ export default function Finance() {
     mutationFn: async (data: any) => {
       const response = await fetch("/api/service-orders", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -144,6 +145,7 @@ export default function Finance() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       const response = await fetch(`/api/service-orders/${id}`, {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });

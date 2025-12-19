@@ -84,7 +84,7 @@ export default function Customers() {
   const { data: customers, isLoading } = useQuery({
     queryKey: ["/api/customers"],
     queryFn: async () => {
-      const response = await fetch("/api/customers");
+      const response = await fetch("/api/customers", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch customers");
       return response.json();
     },
@@ -94,7 +94,7 @@ export default function Customers() {
     queryKey: ["/api/vehicles", selectedCustomer?.id],
     queryFn: async () => {
       if (!selectedCustomer?.id) return [];
-      const response = await fetch(`/api/vehicles?customerId=${selectedCustomer.id}`);
+      const response = await fetch(`/api/vehicles?customerId=${selectedCustomer.id}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch vehicles");
       return response.json();
     },
@@ -105,6 +105,7 @@ export default function Customers() {
     mutationFn: async (data: any) => {
       const response = await fetch("/api/customers", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -126,6 +127,7 @@ export default function Customers() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       const response = await fetch(`/api/customers/${id}`, {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -148,6 +150,7 @@ export default function Customers() {
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/customers/${id}`, {
         method: "DELETE",
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to delete customer");
       return response.json();
