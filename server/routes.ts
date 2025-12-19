@@ -82,6 +82,11 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  // Health check for deployment (must be first, before any middleware)
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
+  
   // ==================== AUTH ROUTES ====================
   
   // Login
