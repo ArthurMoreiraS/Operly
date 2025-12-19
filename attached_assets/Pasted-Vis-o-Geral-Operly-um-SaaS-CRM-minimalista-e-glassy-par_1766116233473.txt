@@ -1,0 +1,41 @@
+Visão Geral
+Operly é um SaaS CRM minimalista e glassy para lava-rápidos e estética automotiva no Brasil, substituindo agendas caóticas de WhatsApp por organização profissional. MVP foca em 6 módulos essenciais (Dashboard, Agendamentos, Finanças, Clientes, Serviços, Configurações) com design elegante em azul escuro (#222a34) e CTAs coral (#e07954). Inclui página de marketing personalizada (/seu-negocio) para clientes agendarem serviços diretamente, aumentando conversões em 3x.​
+
+Público-Alvo e Problema Resolvido
+Donos de lava-rápidos e esteticistas automotivos lutam com WhatsApp desorganizado, no-shows e faturamento manual. Operly organiza tudo em um dashboard intuitivo, envia lembretes automáticos e gera links de agendamento profissionais para compartilhar via WhatsApp/Instagram. Métricas MVP: 80% redução no tempo de agendamento, +40% ocupação da agenda.​​
+
+Funcionalidades MVP Principais
+Dashboard
+Visão 360° com cards glassy: agenda do dia (color-coded), faturamento hoje/semana, top clientes, alertas (atrasos, estoque baixo). Gráficos interativos (receita x serviços) com filtro por período. Widget "Ações rápidas": novo agendamento, cliente VIP.​
+
+Agendamentos
+Calendário drag-and-drop com slots visuais (disponível/oculto), integração WhatsApp para confirmações automáticas ("Seu lava-rápido está agendado para 14h!"). Status pipeline: confirmado > em andamento > concluído. Bloqueio automático de horários concorrentes.​
+
+Clientes e Veículos
+Cadastro unificado cliente+veículo com foto, histórico serviços, preferências (cera específica, alergias produtos). QR Code único por cliente para check-in instantâneo no balcão. Segmentação: VIPs, inativos para remarketing automático.​
+
+Serviços e Preços
+Catálogo com fotos profissionais, tempos estimados, preços dinâmicos (horário pico +20%). Pacotes combos ("lavagem + polimento -15%"), upsell inteligente no checkout. Checklist digital por serviço (vidros, rodas, motor).​
+
+Finanças
+Ordens de Serviço (OS) automáticas com PDF NF-e, parcelamento Pix, controle comissões por funcionário. Relatórios: DRE simplificado, fluxo caixa, ranking serviços mais vendidos. Export Excel/Whatsapp para contador.​
+
+Configurações
+Perfil negócio (nome, logo, endereço Google Maps), horários funcionamento, funcionários + permissões, integração WhatsApp Business, templates SMS/email. White-label para página /meu-lava-rapido.​
+
+Página de Marketing Personalizada (/seu-negocio)
+Página pública one-page em subdomínio (lavaexpress.operly.com.br) com:
+
+Hero com foto loja + serviços em grid glassy
+
+Calendário agendamento real-time (escolha data/hora/serviço)
+
+Formulário simples: nome, telefone, veículo, observações
+
+Confirmação via WhatsApp instantânea
+
+Galeria before/after + depoimentos
+Design 100% responsivo, SEO local ("lava rápido Planaltina GO").​
+
+Design System e Experiência
+Estética glassy premium: cards com backdrop-filter: blur(16px), bordas 20px radius, sombras orgânicas (0 32px 64px rgba(34,42,52,0.12)). Tipografia Inter Variable (H1 3.2rem, body 1.125rem), grid 12-colunas, spacing scale 8px. Microinterações: scale 1.05 em hover, loading skeletons, scroll suave entre módulos. Dark mode automático.​​
