@@ -12,7 +12,7 @@ import {
 import Logo from "@assets/Letter_R_(1)_1766118629756.png";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Agendamentos", href: "/schedule", icon: Calendar },
   { name: "Clientes", href: "/customers", icon: Users },
   { name: "Serviços", href: "/services", icon: Wrench },
