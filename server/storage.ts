@@ -1,39 +1,48 @@
 import { 
-  type User, 
-  type InsertUser,
-  type Customer,
-  type InsertCustomer,
-  type Vehicle,
-  type InsertVehicle,
-  type Service,
-  type InsertService,
-  type Appointment,
-  type InsertAppointment,
-  type ServiceOrder,
-  type InsertServiceOrder,
-  type Settings,
-  type InsertSettings,
-  users,
-  customers,
-  vehicles,
-  services,
-  appointments,
-  serviceOrders,
-  settings
+  type Business, type InsertBusiness,
+  type User, type InsertUser,
+  type Session, type InsertSession,
+  type Lead, type InsertLead,
+  type Customer, type InsertCustomer,
+  type Vehicle, type InsertVehicle,
+  type Service, type InsertService,
+  type Appointment, type InsertAppointment,
+  type ServiceOrder, type InsertServiceOrder,
+  businesses, users, sessions, leads,
+  customers, vehicles, services, appointments, serviceOrders
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import crypto from "crypto";
 
 export interface IStorage {
-  // User methods
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  // Business methods
+  getBusiness(id: number): Promise<Business | undefined>;
+  getBusinessBySlug(slug: string): Promise<Business | undefined>;
+  createBusiness(business: InsertBusiness): Promise<Business>;
+  updateBusiness(id: number, business: Partial<InsertBusiness>): Promise<Business | undefined>;
+  
+  // User/Auth methods
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  // Customer methods
-  getCustomers(): Promise<(Customer & { vehicleCount: number })[]>;
+  // Session methods
+  getSession(id: string): Promise<Session | undefined>;
+  createSession(userId: number): Promise<Session>;
+  deleteSession(id: string): Promise<void>;
+  cleanExpiredSessions(): Promise<void>;
+  
+  // Lead methods
+  getLeads(): Promise<Lead[]>;
+  createLead(lead: InsertLead): Promise<Lead>;
+  updateLead(id: number, lead: Partial<Lead>): Promise<Lead | undefined>;
+  
+  // Customer methods (business-scoped)
+  getCustomers(businessId: number): Promise<(Customer & { vehicleCount: number })[]>;
   getCustomer(id: number): Promise<Customer | undefined>;
+  getCustomerByPhone(businessId: number, phone: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<void>;
@@ -45,33 +54,32 @@ export interface IStorage {
   updateVehicle(id: number, vehicle: Partial<InsertVehicle>): Promise<Vehicle | undefined>;
   deleteVehicle(id: number): Promise<void>;
   
-  // Service methods
-  getServices(): Promise<Service[]>;
-  getActiveServices(): Promise<Service[]>;
+  // Service methods (business-scoped)
+  getServices(businessId: number): Promise<Service[]>;
+  getActiveServices(businessId: number): Promise<Service[]>;
   getService(id: number): Promise<Service | undefined>;
   createService(service: InsertService): Promise<Service>;
   updateService(id: number, service: Partial<InsertService>): Promise<Service | undefined>;
   deleteService(id: number): Promise<void>;
   
-  // Appointment methods
-  getAppointments(date?: Date): Promise<any[]>;
+  // Appointment methods (business-scoped)
+  getAppointments(businessId: number, date?: Date): Promise<any[]>;
   getAppointment(id: number): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined>;
   deleteAppointment(id: number): Promise<void>;
   
-  // Service Order methods
-  getServiceOrders(): Promise<any[]>;
+  // Service Order methods (business-scoped)
+  getServiceOrders(businessId: number): Promise<any[]>;
   getServiceOrder(id: number): Promise<ServiceOrder | undefined>;
   createServiceOrder(order: InsertServiceOrder): Promise<ServiceOrder>;
   updateServiceOrder(id: number, order: Partial<InsertServiceOrder>): Promise<ServiceOrder | undefined>;
   
-  // Settings methods
-  getSettings(): Promise<Settings | undefined>;
-  updateSettings(settingsData: Partial<InsertSettings>): Promise<Settings>;
+  // Dashboard statistics (business-scoped)
+  getDashboardStats(businessId: number): Promise<any>;
   
-  // Dashboard statistics
-  getDashboardStats(): Promise<any>;
+  // Seed test data
+  seedTestBusiness(email: string, password: string): Promise<{ business: Business; user: User }>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -82,27 +90,89 @@ export class DrizzleStorage implements IStorage {
     this.db = drizzle(pool);
   }
 
+  // Business methods
+  async getBusiness(id: number): Promise<Business | undefined> {
+    const result = await this.db.select().from(businesses).where(eq(businesses.id, id));
+    return result[0];
+  }
+
+  async getBusinessBySlug(slug: string): Promise<Business | undefined> {
+    const result = await this.db.select().from(businesses).where(eq(businesses.slug, slug));
+    return result[0];
+  }
+
+  async createBusiness(business: InsertBusiness): Promise<Business> {
+    const result = await this.db.insert(businesses).values(business).returning();
+    return result[0];
+  }
+
+  async updateBusiness(id: number, business: Partial<InsertBusiness>): Promise<Business | undefined> {
+    const result = await this.db.update(businesses).set(business).where(eq(businesses.id, id)).returning();
+    return result[0];
+  }
+
   // User methods
-  async getUser(id: string): Promise<User | undefined> {
+  async getUser(id: number): Promise<User | undefined> {
     const result = await this.db.select().from(users).where(eq(users.id, id));
     return result[0];
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await this.db.select().from(users).where(eq(users.username, username));
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.email, email));
     return result[0];
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await this.db.insert(users).values(insertUser).returning();
+  async createUser(user: InsertUser): Promise<User> {
+    const result = await this.db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  // Session methods
+  async getSession(id: string): Promise<Session | undefined> {
+    const result = await this.db.select().from(sessions).where(eq(sessions.id, id));
+    return result[0];
+  }
+
+  async createSession(userId: number): Promise<Session> {
+    const sessionId = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const result = await this.db.insert(sessions).values({
+      id: sessionId,
+      userId,
+      expiresAt,
+    }).returning();
+    return result[0];
+  }
+
+  async deleteSession(id: string): Promise<void> {
+    await this.db.delete(sessions).where(eq(sessions.id, id));
+  }
+
+  async cleanExpiredSessions(): Promise<void> {
+    await this.db.delete(sessions).where(lte(sessions.expiresAt, new Date()));
+  }
+
+  // Lead methods
+  async getLeads(): Promise<Lead[]> {
+    return await this.db.select().from(leads).orderBy(desc(leads.createdAt));
+  }
+
+  async createLead(lead: InsertLead): Promise<Lead> {
+    const result = await this.db.insert(leads).values(lead).returning();
+    return result[0];
+  }
+
+  async updateLead(id: number, lead: Partial<Lead>): Promise<Lead | undefined> {
+    const result = await this.db.update(leads).set(lead).where(eq(leads.id, id)).returning();
     return result[0];
   }
 
   // Customer methods
-  async getCustomers(): Promise<(Customer & { vehicleCount: number })[]> {
+  async getCustomers(businessId: number): Promise<(Customer & { vehicleCount: number })[]> {
     const result = await this.db
       .select({
         id: customers.id,
+        businessId: customers.businessId,
         name: customers.name,
         phone: customers.phone,
         email: customers.email,
@@ -112,6 +182,7 @@ export class DrizzleStorage implements IStorage {
       })
       .from(customers)
       .leftJoin(vehicles, eq(vehicles.customerId, customers.id))
+      .where(eq(customers.businessId, businessId))
       .groupBy(customers.id)
       .orderBy(desc(customers.id));
     
@@ -120,6 +191,13 @@ export class DrizzleStorage implements IStorage {
 
   async getCustomer(id: number): Promise<Customer | undefined> {
     const result = await this.db.select().from(customers).where(eq(customers.id, id));
+    return result[0];
+  }
+
+  async getCustomerByPhone(businessId: number, phone: string): Promise<Customer | undefined> {
+    const result = await this.db.select().from(customers).where(
+      and(eq(customers.businessId, businessId), eq(customers.phone, phone))
+    );
     return result[0];
   }
 
@@ -162,12 +240,16 @@ export class DrizzleStorage implements IStorage {
   }
 
   // Service methods
-  async getServices(): Promise<Service[]> {
-    return await this.db.select().from(services).orderBy(services.category, services.name);
+  async getServices(businessId: number): Promise<Service[]> {
+    return await this.db.select().from(services)
+      .where(eq(services.businessId, businessId))
+      .orderBy(services.category, services.name);
   }
 
-  async getActiveServices(): Promise<Service[]> {
-    return await this.db.select().from(services).where(eq(services.isActive, true)).orderBy(services.category, services.name);
+  async getActiveServices(businessId: number): Promise<Service[]> {
+    return await this.db.select().from(services)
+      .where(and(eq(services.businessId, businessId), eq(services.isActive, true)))
+      .orderBy(services.category, services.name);
   }
 
   async getService(id: number): Promise<Service | undefined> {
@@ -190,10 +272,11 @@ export class DrizzleStorage implements IStorage {
   }
 
   // Appointment methods
-  async getAppointments(date?: Date): Promise<any[]> {
-    let query = this.db
+  async getAppointments(businessId: number, date?: Date): Promise<any[]> {
+    let baseQuery = this.db
       .select({
         id: appointments.id,
+        businessId: appointments.businessId,
         scheduledAt: appointments.scheduledAt,
         duration: appointments.duration,
         status: appointments.status,
@@ -220,6 +303,7 @@ export class DrizzleStorage implements IStorage {
       .leftJoin(customers, eq(appointments.customerId, customers.id))
       .leftJoin(vehicles, eq(appointments.vehicleId, vehicles.id))
       .leftJoin(services, eq(appointments.serviceId, services.id))
+      .where(eq(appointments.businessId, businessId))
       .orderBy(appointments.scheduledAt);
 
     if (date) {
@@ -228,15 +312,47 @@ export class DrizzleStorage implements IStorage {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
       
-      return await query.where(
-        and(
-          gte(appointments.scheduledAt, startOfDay),
-          lte(appointments.scheduledAt, endOfDay)
+      return await this.db
+        .select({
+          id: appointments.id,
+          businessId: appointments.businessId,
+          scheduledAt: appointments.scheduledAt,
+          duration: appointments.duration,
+          status: appointments.status,
+          notes: appointments.notes,
+          createdAt: appointments.createdAt,
+          customer: {
+            id: customers.id,
+            name: customers.name,
+            phone: customers.phone,
+          },
+          vehicle: {
+            id: vehicles.id,
+            brand: vehicles.brand,
+            model: vehicles.model,
+            plate: vehicles.plate,
+          },
+          service: {
+            id: services.id,
+            name: services.name,
+            price: services.price,
+          },
+        })
+        .from(appointments)
+        .leftJoin(customers, eq(appointments.customerId, customers.id))
+        .leftJoin(vehicles, eq(appointments.vehicleId, vehicles.id))
+        .leftJoin(services, eq(appointments.serviceId, services.id))
+        .where(
+          and(
+            eq(appointments.businessId, businessId),
+            gte(appointments.scheduledAt, startOfDay),
+            lte(appointments.scheduledAt, endOfDay)
+          )
         )
-      );
+        .orderBy(appointments.scheduledAt);
     }
 
-    return await query;
+    return await baseQuery;
   }
 
   async getAppointment(id: number): Promise<Appointment | undefined> {
@@ -259,10 +375,11 @@ export class DrizzleStorage implements IStorage {
   }
 
   // Service Order methods
-  async getServiceOrders(): Promise<any[]> {
+  async getServiceOrders(businessId: number): Promise<any[]> {
     return await this.db
       .select({
         id: serviceOrders.id,
+        businessId: serviceOrders.businessId,
         amount: serviceOrders.amount,
         paymentStatus: serviceOrders.paymentStatus,
         paymentMethod: serviceOrders.paymentMethod,
@@ -280,6 +397,7 @@ export class DrizzleStorage implements IStorage {
       .from(serviceOrders)
       .leftJoin(customers, eq(serviceOrders.customerId, customers.id))
       .leftJoin(services, eq(serviceOrders.serviceId, services.id))
+      .where(eq(serviceOrders.businessId, businessId))
       .orderBy(desc(serviceOrders.createdAt));
   }
 
@@ -298,57 +416,30 @@ export class DrizzleStorage implements IStorage {
     return result[0];
   }
 
-  // Settings methods
-  async getSettings(): Promise<Settings | undefined> {
-    const result = await this.db.select().from(settings).limit(1);
-    if (result.length === 0) {
-      // Create default settings if none exist
-      const defaultSettings: InsertSettings = {
-        businessName: "Meu Lava-Rápido",
-        whatsappReminders: true,
-        delayAlerts: true,
-        dailyReport: false,
-      };
-      const created = await this.db.insert(settings).values(defaultSettings).returning();
-      return created[0];
-    }
-    return result[0];
-  }
-
-  async updateSettings(settingsData: Partial<InsertSettings>): Promise<Settings> {
-    const existing = await this.getSettings();
-    if (!existing) {
-      const result = await this.db.insert(settings).values(settingsData as InsertSettings).returning();
-      return result[0];
-    }
-    const result = await this.db.update(settings).set(settingsData).where(eq(settings.id, existing.id)).returning();
-    return result[0];
-  }
-
   // Dashboard statistics
-  async getDashboardStats(): Promise<any> {
+  async getDashboardStats(businessId: number): Promise<any> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Get today's appointments
     const todayAppointments = await this.db
       .select()
       .from(appointments)
       .where(
         and(
+          eq(appointments.businessId, businessId),
           gte(appointments.scheduledAt, today),
           lte(appointments.scheduledAt, tomorrow)
         )
       );
 
-    // Get today's revenue
     const todayOrders = await this.db
       .select()
       .from(serviceOrders)
       .where(
         and(
+          eq(serviceOrders.businessId, businessId),
           gte(serviceOrders.createdAt, today),
           lte(serviceOrders.createdAt, tomorrow),
           eq(serviceOrders.paymentStatus, "paid")
@@ -357,7 +448,6 @@ export class DrizzleStorage implements IStorage {
 
     const todayRevenue = todayOrders.reduce((sum, order) => sum + parseFloat(order.amount), 0);
 
-    // Get weekly revenue
     const weekAgo = new Date(today);
     weekAgo.setDate(weekAgo.getDate() - 7);
     
@@ -366,6 +456,7 @@ export class DrizzleStorage implements IStorage {
       .from(serviceOrders)
       .where(
         and(
+          eq(serviceOrders.businessId, businessId),
           gte(serviceOrders.createdAt, weekAgo),
           eq(serviceOrders.paymentStatus, "paid")
         )
@@ -379,6 +470,103 @@ export class DrizzleStorage implements IStorage {
       weeklyRevenue,
       appointmentsList: todayAppointments,
     };
+  }
+
+  // Seed test business and user
+  async seedTestBusiness(email: string, passwordHash: string): Promise<{ business: Business; user: User }> {
+    // Check if business already exists
+    const existingUser = await this.getUserByEmail(email);
+    if (existingUser) {
+      const business = await this.getBusiness(existingUser.businessId);
+      return { business: business!, user: existingUser };
+    }
+
+    // Create business
+    const business = await this.createBusiness({
+      name: "Rafael Lavagens",
+      slug: "rafael-lavagens",
+      phone: "(11) 99999-9999",
+      email: email,
+      address: "Rua das Flores, 123 - São Paulo, SP",
+      plan: "pro",
+      whatsappReminders: true,
+      delayAlerts: true,
+      dailyReport: false,
+    });
+
+    // Create user
+    const user = await this.createUser({
+      businessId: business.id,
+      name: "Rafael Lavagens",
+      email: email,
+      passwordHash: passwordHash,
+      role: "admin",
+    });
+
+    // Create sample services
+    const servicesData = [
+      { businessId: business.id, name: "Lavagem Simples", category: "Lavagem", price: "40.00", duration: 40, description: "Lavagem completa do veículo", features: ["Shampoo neutro", "Limpeza de rodas", "Aspiração interna", "Pretinho nos pneus"], isPopular: true, isActive: true },
+      { businessId: business.id, name: "Lavagem Detalhada", category: "Lavagem", price: "80.00", duration: 90, description: "Lavagem detalhada com cera", features: ["Tudo da simples", "Cera líquida", "Limpeza de cantos"], isPopular: false, isActive: true },
+      { businessId: business.id, name: "Polimento Comercial", category: "Estética", price: "250.00", duration: 240, description: "Polimento para remover riscos", features: ["Remoção riscos leves", "Brilho intenso"], isPopular: true, isActive: true },
+      { businessId: business.id, name: "Higienização Interna", category: "Estética", price: "180.00", duration: 180, description: "Higienização completa do interior", features: ["Bancos e teto", "Carpetes", "Eliminação odores"], isPopular: false, isActive: true },
+    ];
+
+    const createdServices = [];
+    for (const s of servicesData) {
+      createdServices.push(await this.createService(s));
+    }
+
+    // Create sample customers
+    const customersData = [
+      { businessId: business.id, name: "João Silva", phone: "(11) 99999-9999", email: "joao@email.com", status: "vip" },
+      { businessId: business.id, name: "Maria Oliveira", phone: "(11) 98888-8888", email: "maria@email.com", status: "active" },
+      { businessId: business.id, name: "Carlos Souza", phone: "(11) 97777-7777", status: "active" },
+    ];
+
+    const createdCustomers = [];
+    for (const c of customersData) {
+      createdCustomers.push(await this.createCustomer(c));
+    }
+
+    // Create sample vehicles
+    const vehiclesData = [
+      { customerId: createdCustomers[0].id, brand: "Honda", model: "Civic", plate: "ABC-1234", color: "Preto", year: 2022 },
+      { customerId: createdCustomers[1].id, brand: "Toyota", model: "Corolla", plate: "XYZ-5678", color: "Branco", year: 2021 },
+      { customerId: createdCustomers[2].id, brand: "Jeep", model: "Compass", plate: "DEF-9012", color: "Prata", year: 2023 },
+    ];
+
+    const createdVehicles = [];
+    for (const v of vehiclesData) {
+      createdVehicles.push(await this.createVehicle(v));
+    }
+
+    // Create sample appointments
+    const today = new Date();
+    today.setHours(14, 0, 0, 0);
+    
+    const appointmentsData = [
+      { businessId: business.id, customerId: createdCustomers[0].id, vehicleId: createdVehicles[0].id, serviceId: createdServices[0].id, scheduledAt: today, duration: createdServices[0].duration, status: "completed" },
+      { businessId: business.id, customerId: createdCustomers[1].id, vehicleId: createdVehicles[1].id, serviceId: createdServices[2].id, scheduledAt: new Date(today.getTime() + 3600000), duration: createdServices[2].duration, status: "completed" },
+    ];
+
+    const createdAppointments = [];
+    for (const a of appointmentsData) {
+      createdAppointments.push(await this.createAppointment(a));
+    }
+
+    // Create sample service orders
+    await this.createServiceOrder({
+      businessId: business.id,
+      appointmentId: createdAppointments[0].id,
+      customerId: createdCustomers[0].id,
+      vehicleId: createdVehicles[0].id,
+      serviceId: createdServices[0].id,
+      amount: createdServices[0].price,
+      paymentStatus: "paid",
+      paymentMethod: "pix",
+    });
+
+    return { business, user };
   }
 }
 

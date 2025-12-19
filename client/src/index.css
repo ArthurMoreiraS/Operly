@@ -177,11 +177,19 @@
 .animate-marquee {
   animation: marquee 20s linear infinite;
 }
+  .glassy {
+      @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-xl;
+    }
 
-.glassy {
-  @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-xl;
-}
+    .glassy-card {
+      @apply bg-white/5 backdrop-blur-md border border-white/5 shadow-lg;
+    }
 
-.text-gradient-primary {
-  @apply bg-clip-text text-transparent bg-linear-to-r from-primary to-orange-400;
-}
+    .text-gradient {
+      @apply bg-clip-text text-transparent bg-linear-to-r from-white to-white/70;
+    }
+
+    .text-gradient-primary {
+      @apply bg-clip-text text-transparent bg-linear-to-r from-primary to-orange-400;
+    }
+  }
