@@ -26,15 +26,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "wouter";
 
-const data = [
-  { name: "Seg", value: 1200 },
-  { name: "Ter", value: 2100 },
-  { name: "Qua", value: 1800 },
-  { name: "Qui", value: 2400 },
-  { name: "Sex", value: 3200 },
-  { name: "Sáb", value: 3800 },
-  { name: "Dom", value: 1500 },
-];
 
 const container = {
   hidden: { opacity: 0 },
@@ -169,13 +160,11 @@ export default function Dashboard() {
               <UserPlus className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white mb-1">R$ 85,00</div>
+              <div className="text-2xl font-bold text-white mb-1">
+                R$ {stats?.ticketMedio?.toFixed(2) || '0.00'}
+              </div>
               <div className="flex items-center text-xs">
-                <span className="text-rose-400 flex items-center">
-                  <ArrowDownRight className="h-3 w-3 mr-1" />
-                  -2%
-                </span>
-                <span className="text-gray-500 ml-2">vs. ontem</span>
+                <span className="text-gray-400">média por serviço</span>
               </div>
             </CardContent>
           </Card>
@@ -185,18 +174,16 @@ export default function Dashboard() {
           <Card className="glass-card border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-400">
-                Taxa Ocupação
+                Receita Semanal
               </CardTitle>
               <CheckCircle2 className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white mb-1">92%</div>
+              <div className="text-2xl font-bold text-white mb-1">
+                R$ {stats?.weeklyRevenue?.toFixed(2) || '0.00'}
+              </div>
               <div className="flex items-center text-xs">
-                <span className="text-emerald-400 flex items-center">
-                  <ArrowUpRight className="h-3 w-3 mr-1" />
-                  +15%
-                </span>
-                <span className="text-gray-500 ml-2">vs. ontem</span>
+                <span className="text-gray-400">faturamento semanal</span>
               </div>
             </CardContent>
           </Card>
@@ -214,7 +201,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data}>
+                  <AreaChart data={stats?.weeklyData || []}>
                     <defs>
                       <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#e07954" stopOpacity={0.3}/>

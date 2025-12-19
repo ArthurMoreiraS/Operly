@@ -119,6 +119,48 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
+  // Update profile
+  app.patch("/api/auth/update-profile", authMiddleware, async (req, res) => {
+    try {
+      const { name } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: "Nome é obrigatório" });
+      }
+      const updatedUser = await storage.updateUser(req.user!.id, { name });
+      res.json(updatedUser);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar perfil" });
+    }
+  });
+
+  // Change password
+  app.post("/api/auth/change-password", authMiddleware, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: "Preencha todos os campos" });
+      }
+      
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "Nova senha deve ter pelo menos 6 caracteres" });
+      }
+      
+      // Verify current password
+      if (!verifyPassword(currentPassword, req.user!.passwordHash)) {
+        return res.status(400).json({ error: "Senha atual incorreta" });
+      }
+      
+      // Update password
+      const newHash = hashPassword(newPassword);
+      await storage.updateUser(req.user!.id, { passwordHash: newHash });
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao alterar senha" });
+    }
+  });
+
   // Get current user
   app.get("/api/auth/me", async (req, res) => {
     const sessionId = req.cookies?.sessionId;

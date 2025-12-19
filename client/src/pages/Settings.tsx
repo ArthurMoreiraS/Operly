@@ -6,13 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Store, User, Bell, Loader2, Copy, ExternalLink, Save, Phone, Mail, MapPin } from "lucide-react";
+import { Store, User, Bell, Loader2, Copy, ExternalLink, Save, Phone, Mail, MapPin, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Settings() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   const { data: settings, isLoading } = useQuery({
     queryKey: ["/api/settings"],
@@ -32,8 +34,13 @@ export default function Settings() {
   });
 
   const [accountForm, setAccountForm] = useState({
-    name: "Administrador",
-    email: "admin@operly.com.br",
+    name: "",
+    email: "",
+  });
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
   });
 
   useEffect(() => {
@@ -47,6 +54,15 @@ export default function Settings() {
       });
     }
   }, [settings]);
+
+  useEffect(() => {
+    if (user) {
+      setAccountForm({
+        name: user.name || "",
+        email: user.email || "",
+      });
+    }
+  }, [user]);
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -73,9 +89,64 @@ export default function Settings() {
     updateSettingsMutation.mutate(businessForm);
   };
 
+  const updateAccountMutation = useMutation({
+    mutationFn: async (data: { name: string }) => {
+      const response = await fetch("/api/auth/update-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update profile");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast.success("Perfil atualizado com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar perfil");
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao alterar senha");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      setPasswordForm({ currentPassword: "", newPassword: "" });
+      toast.success("Senha alterada com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
   const handleAccountUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Perfil atualizado com sucesso!");
+    updateAccountMutation.mutate({ name: accountForm.name });
+  };
+
+  const handlePasswordChange = () => {
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      toast.error("Preencha ambos os campos de senha");
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      toast.error("A nova senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+    changePasswordMutation.mutate(passwordForm);
   };
 
   const handleAvatarChange = () => {
@@ -309,6 +380,8 @@ export default function Settings() {
                   <Label className="text-gray-300">Senha Atual</Label>
                   <Input 
                     type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
                     placeholder="••••••••"
                     className="bg-white/5 border-white/10 text-white" 
                   />
@@ -317,6 +390,8 @@ export default function Settings() {
                   <Label className="text-gray-300">Nova Senha</Label>
                   <Input 
                     type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
                     placeholder="••••••••"
                     className="bg-white/5 border-white/10 text-white" 
                   />
@@ -325,9 +400,15 @@ export default function Settings() {
               <Button 
                 variant="outline" 
                 className="border-white/10 text-white hover:bg-white/10 w-full sm:w-auto"
-                onClick={() => toast.info("Funcionalidade de alteração de senha em breve!")}
+                onClick={handlePasswordChange}
+                disabled={changePasswordMutation.isPending}
                 data-testid="button-change-password"
               >
+                {changePasswordMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Lock className="w-4 h-4 mr-2" />
+                )}
                 Alterar Senha
               </Button>
             </CardContent>

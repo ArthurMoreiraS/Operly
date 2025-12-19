@@ -28,6 +28,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, data: Partial<InsertUser>): Promise<User | undefined>;
   
   // Session methods
   getSession(id: string): Promise<Session | undefined>;
@@ -129,6 +130,11 @@ export class DrizzleStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const result = await this.db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  async updateUser(id: number, data: Partial<InsertUser>): Promise<User | undefined> {
+    const result = await this.db.update(users).set(data).where(eq(users.id, id)).returning();
     return result[0];
   }
 
@@ -469,10 +475,49 @@ export class DrizzleStorage implements IStorage {
 
     const weeklyRevenue = weeklyOrders.reduce((sum, order) => sum + parseFloat(order.amount), 0);
 
+    // Calculate ticket médio (average order value)
+    const allPaidOrders = await this.db
+      .select()
+      .from(serviceOrders)
+      .where(
+        and(
+          eq(serviceOrders.businessId, businessId),
+          eq(serviceOrders.paymentStatus, "paid")
+        )
+      );
+    
+    const ticketMedio = allPaidOrders.length > 0 
+      ? allPaidOrders.reduce((sum, order) => sum + parseFloat(order.amount), 0) / allPaidOrders.length 
+      : 0;
+
+    // Get weekly revenue by day for chart
+    const weeklyData = [];
+    const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(today);
+      dayStart.setDate(dayStart.getDate() - i);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+      
+      const dayOrders = weeklyOrders.filter(order => {
+        const orderDate = new Date(order.createdAt);
+        return orderDate >= dayStart && orderDate < dayEnd;
+      });
+      
+      const dayRevenue = dayOrders.reduce((sum, order) => sum + parseFloat(order.amount), 0);
+      weeklyData.push({
+        name: dayNames[dayStart.getDay()],
+        value: dayRevenue
+      });
+    }
+
     return {
       todayAppointments: todayAppointments.length,
       todayRevenue,
       weeklyRevenue,
+      ticketMedio,
+      weeklyData,
       appointmentsList: todayAppointments,
     };
   }
