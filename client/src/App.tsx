@@ -12,6 +12,8 @@ import Services from "@/pages/Services";
 import Finance from "@/pages/Finance";
 import Settings from "@/pages/Settings";
 import PublicBooking from "@/pages/PublicBooking";
+import Leads from "@/pages/Leads";
+import AdminOnboard from "@/pages/AdminOnboard";
 import { Layout } from "@/components/layout/Layout";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 
@@ -49,6 +51,8 @@ function Router() {
               <Route path="/services" component={Services} />
               <Route path="/finance" component={Finance} />
               <Route path="/settings" component={Settings} />
+              <Route path="/admin/leads" component={Leads} />
+              <Route path="/admin/onboard" component={AdminOnboard} />
               <Route component={NotFound} />
             </Switch>
           </Layout>

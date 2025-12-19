@@ -20,6 +20,7 @@ export interface IStorage {
   // Business methods
   getBusiness(id: number): Promise<Business | undefined>;
   getBusinessBySlug(slug: string): Promise<Business | undefined>;
+  getAllBusinesses(): Promise<Business[]>;
   createBusiness(business: InsertBusiness): Promise<Business>;
   updateBusiness(id: number, business: Partial<InsertBusiness>): Promise<Business | undefined>;
   
@@ -99,6 +100,10 @@ export class DrizzleStorage implements IStorage {
   async getBusinessBySlug(slug: string): Promise<Business | undefined> {
     const result = await this.db.select().from(businesses).where(eq(businesses.slug, slug));
     return result[0];
+  }
+
+  async getAllBusinesses(): Promise<Business[]> {
+    return await this.db.select().from(businesses).orderBy(desc(businesses.id));
   }
 
   async createBusiness(business: InsertBusiness): Promise<Business> {

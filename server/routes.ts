@@ -626,6 +626,90 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== ADMIN ROUTES ====================
+  
+  // Admin role check middleware
+  function adminOnly(req: Request, res: Response, next: NextFunction) {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: "Acesso negado. Apenas administradores." });
+    }
+    next();
+  }
+  
+  // Get all businesses (admin only - for super admin view)
+  app.get("/api/admin/businesses", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const allBusinesses = await storage.getAllBusinesses();
+      res.json(allBusinesses);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch businesses" });
+    }
+  });
+
+  // Onboard new customer (create business + user)
+  app.post("/api/admin/onboard", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const { businessName, slug, phone, address, userName, userEmail, userPassword } = req.body;
+
+      if (!businessName || !slug || !userEmail || !userPassword) {
+        return res.status(400).json({ error: "Campos obrigatórios: businessName, slug, userEmail, userPassword" });
+      }
+
+      // Check if slug is already taken
+      const existingBusiness = await storage.getBusinessBySlug(slug);
+      if (existingBusiness) {
+        return res.status(400).json({ error: "Este slug já está em uso" });
+      }
+
+      // Check if email is already taken
+      const existingUser = await storage.getUserByEmail(userEmail);
+      if (existingUser) {
+        return res.status(400).json({ error: "Este email já está cadastrado" });
+      }
+
+      // Create business
+      const business = await storage.createBusiness({
+        name: businessName,
+        slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+        phone: phone || null,
+        address: address || null,
+      });
+
+      // Create user
+      const passwordHash = hashPassword(userPassword);
+      const user = await storage.createUser({
+        businessId: business.id,
+        name: userName || businessName,
+        email: userEmail,
+        passwordHash,
+        role: 'admin',
+      });
+
+      res.status(201).json({
+        success: true,
+        business: { id: business.id, name: business.name, slug: business.slug },
+        user: { id: user.id, email: user.email, name: user.name },
+      });
+    } catch (error) {
+      console.error("Onboard error:", error);
+      res.status(500).json({ error: "Falha ao cadastrar cliente" });
+    }
+  });
+
+  // Update lead status (admin only)
+  app.patch("/api/leads/:id", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const lead = await storage.updateLead(id, req.body);
+      if (!lead) {
+        return res.status(404).json({ error: "Lead not found" });
+      }
+      res.json(lead);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update lead" });
+    }
+  });
+
   // Seed/Init test account
   app.post("/api/init", async (req, res) => {
     try {
