@@ -5,10 +5,62 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Store, User, Bell, Shield, Smartphone } from "lucide-react";
+import { Store, User, Bell, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Settings() {
+  const queryClient = useQueryClient();
+  
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["/api/settings"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings");
+      if (!response.ok) throw new Error("Failed to fetch settings");
+      return response.json();
+    },
+  });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update settings");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast.success("Configurações atualizadas com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar configurações");
+    },
+  });
+
+  const [formData, setFormData] = useState({
+    businessName: "",
+    customUrl: "",
+    address: "",
+  });
+
+  const handleBusinessUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettingsMutation.mutate(formData);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -69,25 +121,45 @@ export default function Settings() {
               <CardDescription className="text-gray-400">Isso aparecerá na sua página de agendamento.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-gray-300">Nome Fantasia</Label>
-                <Input defaultValue="Lava Rápido Express" className="bg-white/5 border-white/10 text-white" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="text-gray-300">URL Personalizada</Label>
-                <div className="flex">
-                  <span className="bg-white/5 border border-r-0 border-white/10 rounded-l-md px-3 py-2 text-gray-400 text-sm flex items-center">
-                    operly.com.br/
-                  </span>
-                  <Input defaultValue="lava-express" className="bg-white/5 border-white/10 text-white rounded-l-none" />
-                </div>
-              </div>
+              <form onSubmit={handleBusinessUpdate}>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Nome Fantasia</Label>
+                    <Input 
+                      value={formData.businessName || settings?.businessName || ""} 
+                      onChange={(e) => setFormData({...formData, businessName: e.target.value})}
+                      className="bg-white/5 border-white/10 text-white" 
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">URL Personalizada</Label>
+                    <div className="flex">
+                      <span className="bg-white/5 border border-r-0 border-white/10 rounded-l-md px-3 py-2 text-gray-400 text-sm flex items-center">
+                        operly.com.br/
+                      </span>
+                      <Input 
+                        value={formData.customUrl || settings?.customUrl || ""}
+                        onChange={(e) => setFormData({...formData, customUrl: e.target.value})}
+                        className="bg-white/5 border-white/10 text-white rounded-l-none" 
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="text-gray-300">Endereço</Label>
-                <Input defaultValue="Rua das Acácias, 123 - Centro" className="bg-white/5 border-white/10 text-white" />
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Endereço</Label>
+                    <Input 
+                      value={formData.address || settings?.address || ""}
+                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      className="bg-white/5 border-white/10 text-white" 
+                    />
+                  </div>
+
+                  <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
+                    Salvar Alterações
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>
@@ -103,21 +175,30 @@ export default function Settings() {
                   <Label className="text-base text-white">Lembretes WhatsApp</Label>
                   <p className="text-sm text-gray-400">Enviar lembretes automáticos para clientes.</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch 
+                  checked={settings?.whatsappReminders}
+                  onCheckedChange={(checked) => updateSettingsMutation.mutate({ whatsappReminders: checked })}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base text-white">Alertas de Atraso</Label>
                   <p className="text-sm text-gray-400">Me avise quando um serviço atrasar.</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch 
+                  checked={settings?.delayAlerts}
+                  onCheckedChange={(checked) => updateSettingsMutation.mutate({ delayAlerts: checked })}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-base text-white">Relatório Diário</Label>
                   <p className="text-sm text-gray-400">Receber resumo do dia por email.</p>
                 </div>
-                <Switch />
+                <Switch 
+                  checked={settings?.dailyReport}
+                  onCheckedChange={(checked) => updateSettingsMutation.mutate({ dailyReport: checked })}
+                />
               </div>
             </CardContent>
           </Card>
