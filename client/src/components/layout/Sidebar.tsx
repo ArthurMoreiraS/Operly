@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut
 } from "lucide-react";
+import Logo from "@assets/3_1766116564466.png";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -27,7 +28,7 @@ export function Sidebar() {
       <div className="p-8 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/20 border border-white/10 bg-[#222a34]">
           <img 
-            src="/attached_assets/3_1766116564466.png" 
+            src={Logo}
             alt="Operly Logo" 
             className="w-full h-full object-cover scale-110"
           />
