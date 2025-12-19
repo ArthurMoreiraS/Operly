@@ -18,7 +18,7 @@ import { Layout } from "@/components/layout/Layout";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   
   if (isLoading) {
     return (
@@ -35,12 +35,37 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Redirect based on user role
+function RoleBasedRedirect() {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  
+  // Admin goes to leads, regular users go to dashboard
+  if (user?.role === 'admin') {
+    return <Redirect to="/admin/leads" />;
+  }
+  
+  return <Redirect to="/dashboard" />;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
       <Route path="/agendar" component={PublicBooking} />
       <Route path="/agendar/:slug" component={PublicBooking} />
+      <Route path="/home">
+        <ProtectedRoute>
+          <RoleBasedRedirect />
+        </ProtectedRoute>
+      </Route>
       <Route>
         <ProtectedRoute>
           <Layout>

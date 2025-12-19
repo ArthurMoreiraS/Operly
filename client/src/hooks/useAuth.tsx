@@ -58,7 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['/api/auth/me'], data);
-      setLocation('/dashboard');
+      // Redirect based on role: admin goes to leads, users go to dashboard
+      const redirectPath = data.user?.role === 'admin' ? '/admin/leads' : '/dashboard';
+      setLocation(redirectPath);
     },
   });
 

@@ -58,33 +58,9 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       </div>
 
       <nav className="flex-1 px-3 lg:px-4 space-y-1 lg:space-y-2 py-4 overflow-y-auto">
-        {navigation.map((item) => {
-          const isActive = location === item.href;
-          return (
-            <Link key={item.name} href={item.href} onClick={handleNavClick}>
-              <div
-                className={cn(
-                  "flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl transition-all duration-200 cursor-pointer group",
-                  isActive
-                    ? "bg-primary text-white shadow-lg shadow-primary/20"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                )}
-              >
-                <item.icon
-                  className={cn(
-                    "w-5 h-5 transition-colors",
-                    isActive ? "text-white" : "text-gray-500 group-hover:text-white"
-                  )}
-                />
-                <span className="font-medium text-sm lg:text-base">{item.name}</span>
-              </div>
-            </Link>
-          );
-        })}
-
-        {user?.role === 'admin' && (
+        {user?.role === 'admin' ? (
           <>
-            <div className="pt-4 pb-2 px-3">
+            <div className="pb-2 px-3">
               <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">Administração</p>
             </div>
             {adminNavigation.map((item) => {
@@ -111,20 +87,46 @@ export function Sidebar({ onNavigate }: SidebarProps) {
               );
             })}
           </>
+        ) : (
+          navigation.map((item) => {
+            const isActive = location === item.href;
+            return (
+              <Link key={item.name} href={item.href} onClick={handleNavClick}>
+                <div
+                  className={cn(
+                    "flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-xl transition-all duration-200 cursor-pointer group",
+                    isActive
+                      ? "bg-primary text-white shadow-lg shadow-primary/20"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <item.icon
+                    className={cn(
+                      "w-5 h-5 transition-colors",
+                      isActive ? "text-white" : "text-gray-500 group-hover:text-white"
+                    )}
+                  />
+                  <span className="font-medium text-sm lg:text-base">{item.name}</span>
+                </div>
+              </Link>
+            );
+          })
         )}
       </nav>
 
       <div className="p-3 lg:p-4 border-t border-white/5">
-        <div className="p-3 lg:p-4 rounded-2xl bg-white/5 backdrop-blur-md mb-3 lg:mb-4 border border-white/5">
-          <div className="flex justify-between items-center mb-2">
-            <p className="text-xs text-gray-400">Plano Pro</p>
-            <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">Ativo</span>
+        {user?.role !== 'admin' && (
+          <div className="p-3 lg:p-4 rounded-2xl bg-white/5 backdrop-blur-md mb-3 lg:mb-4 border border-white/5">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-xs text-gray-400">Plano Pro</p>
+              <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">Ativo</span>
+            </div>
+            <div className="w-full bg-gray-700/50 h-1.5 rounded-full mb-2 overflow-hidden">
+              <div className="bg-primary h-full rounded-full w-[75%]" />
+            </div>
+            <p className="text-xs text-gray-300">75% da quota utilizada</p>
           </div>
-          <div className="w-full bg-gray-700/50 h-1.5 rounded-full mb-2 overflow-hidden">
-            <div className="bg-primary h-full rounded-full w-[75%]" />
-          </div>
-          <p className="text-xs text-gray-300">75% da quota utilizada</p>
-        </div>
+        )}
         <button 
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-3 text-gray-400 hover:text-white w-full transition-colors rounded-xl hover:bg-white/5 cursor-pointer hover:border hover:border-white/5"
