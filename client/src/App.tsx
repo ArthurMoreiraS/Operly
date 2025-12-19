@@ -10,21 +10,28 @@ import Customers from "@/pages/Customers";
 import Services from "@/pages/Services";
 import Finance from "@/pages/Finance";
 import Settings from "@/pages/Settings";
+import PublicBooking from "@/pages/PublicBooking";
 import { Layout } from "@/components/layout/Layout";
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/schedule" component={Schedule} />
-        <Route path="/customers" component={Customers} />
-        <Route path="/services" component={Services} />
-        <Route path="/finance" component={Finance} />
-        <Route path="/settings" component={Settings} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/agendar" component={PublicBooking} />
+      <Route path="/agendar/:slug" component={PublicBooking} />
+      <Route>
+        <Layout>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/schedule" component={Schedule} />
+            <Route path="/customers" component={Customers} />
+            <Route path="/services" component={Services} />
+            <Route path="/finance" component={Finance} />
+            <Route path="/settings" component={Settings} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 

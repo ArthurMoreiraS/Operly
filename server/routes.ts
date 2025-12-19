@@ -330,6 +330,63 @@ export async function registerRoutes(
     }
   });
 
+  // Public booking endpoint (no auth required)
+  app.post("/api/public/book", async (req, res) => {
+    try {
+      const { customer: customerData, vehicle: vehicleData, appointment: appointmentData } = req.body;
+
+      // Check if customer already exists by phone
+      const existingCustomers = await storage.getCustomers();
+      let customer = existingCustomers.find((c: any) => c.phone === customerData.phone);
+
+      if (!customer) {
+        customer = await storage.createCustomer({
+          name: customerData.name,
+          phone: customerData.phone,
+          email: customerData.email || null,
+          status: "active",
+        });
+      }
+
+      // Check if vehicle already exists
+      const existingVehicles = await storage.getVehiclesByCustomer(customer.id);
+      let vehicle = existingVehicles.find((v: any) => 
+        v.plate && vehicleData.plate && v.plate.toLowerCase() === vehicleData.plate.toLowerCase()
+      );
+
+      if (!vehicle) {
+        vehicle = await storage.createVehicle({
+          customerId: customer.id,
+          brand: vehicleData.brand,
+          model: vehicleData.model,
+          plate: vehicleData.plate || null,
+          color: vehicleData.color || null,
+          year: null,
+        });
+      }
+
+      // Create the appointment
+      const appointment = await storage.createAppointment({
+        customerId: customer.id,
+        vehicleId: vehicle.id,
+        serviceId: appointmentData.serviceId,
+        scheduledAt: new Date(appointmentData.scheduledAt),
+        duration: appointmentData.duration,
+        status: "pending",
+      });
+
+      res.json({ 
+        success: true, 
+        appointment,
+        customer: { id: customer.id, name: customer.name },
+        vehicle: { id: vehicle.id, brand: vehicle.brand, model: vehicle.model }
+      });
+    } catch (error) {
+      console.error("Public booking error:", error);
+      res.status(500).json({ error: "Failed to create booking" });
+    }
+  });
+
   // Seed database (for development only)
   app.post("/api/seed", async (req, res) => {
     try {

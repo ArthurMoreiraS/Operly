@@ -407,12 +407,13 @@ export default function Customers() {
       </Card>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="glass-card border-white/10 text-white max-w-md mx-4">
+        <DialogContent className="glass-card border-white/10 text-white w-[calc(100%-2rem)] max-w-md sm:w-full">
           <DialogHeader>
             <DialogTitle className="text-white text-xl">Novo Cliente</DialogTitle>
+            <DialogDescription className="text-gray-400">Preencha os dados do novo cliente.</DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label className="text-gray-300">Nome *</Label>
               <Input 
@@ -468,12 +469,13 @@ export default function Customers() {
       </Dialog>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="glass-card border-white/10 text-white max-w-md mx-4">
+        <DialogContent className="glass-card border-white/10 text-white w-[calc(100%-2rem)] max-w-md sm:w-full">
           <DialogHeader>
             <DialogTitle className="text-white text-xl">Editar Cliente</DialogTitle>
+            <DialogDescription className="text-gray-400">Atualize os dados do cliente.</DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label className="text-gray-300">Nome *</Label>
               <Input 
@@ -526,7 +528,7 @@ export default function Customers() {
       </Dialog>
 
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="glass-card border-white/10 text-white max-w-md mx-4">
+        <DialogContent className="glass-card border-white/10 text-white w-[calc(100%-2rem)] max-w-md sm:w-full">
           <DialogHeader>
             <DialogTitle className="text-white text-xl">Excluir Cliente</DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -552,7 +554,7 @@ export default function Customers() {
       </Dialog>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="glass-card border-white/10 text-white max-w-lg mx-4">
+        <DialogContent className="glass-card border-white/10 text-white w-[calc(100%-2rem)] max-w-lg sm:w-full">
           <DialogHeader>
             <DialogTitle className="text-white text-xl flex items-center gap-2">
               {selectedCustomer?.name}
