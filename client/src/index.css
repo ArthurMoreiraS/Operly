@@ -58,6 +58,38 @@
 
 /* BASE STYLES - Using the requested Dark Blue #222a34 and Coral #e07954 */
 :root {
+
+  /* Dark Mode by Default/Core Colors Landing page*/
+  --background: 213 21% 17%; /* #222a34 - Dark Blue */
+  --foreground: 210 40% 98%;
+
+  --card: 215 25% 20%; /* Slightly lighter than bg */
+  --card-foreground: 210 40% 98%;
+
+  --popover: 213 21% 17%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 16 69% 60%; /* #e07954 - Coral */
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 215 25% 27%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 215 25% 27%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 215 25% 27%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 215 25% 27%;
+  --input: 215 25% 27%;
+  --ring: 16 69% 60%;
+
+  --radius: 1.5rem; 
+  /* 24px as requested */
   /* Default to Dark Mode because the design is dark-themed */
   color-scheme: dark;
   
@@ -144,4 +176,18 @@
 
 .animate-marquee {
   animation: marquee 20s linear infinite;
+}
+
+@layer utilities {
+  .glassy {
+    @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-xl;
+  }
+
+  .glassy-card {
+    @apply bg-white/5 backdrop-blur-md border border-white/5 shadow-lg;
+  }
+
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent bg-linear-to-r from-primary to-orange-400;
+  }
 }
