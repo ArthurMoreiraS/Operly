@@ -17,9 +17,13 @@ import {
   Car, 
   Clock, 
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const data = [
   { name: "Seg", value: 1200 },
@@ -27,7 +31,7 @@ const data = [
   { name: "Qua", value: 1800 },
   { name: "Qui", value: 2400 },
   { name: "Sex", value: 3200 },
-  { name: "Sab", value: 3800 },
+  { name: "Sáb", value: 3800 },
   { name: "Dom", value: 1500 },
 ];
 
@@ -47,6 +51,33 @@ const item = {
 };
 
 export default function Dashboard() {
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["/api/dashboard/stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/dashboard/stats");
+      if (!response.ok) throw new Error("Failed to fetch stats");
+      return response.json();
+    },
+  });
+
+  const { data: todayAppointments } = useQuery({
+    queryKey: ["/api/appointments", "today"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await fetch(`/api/appointments?date=${today}`);
+      if (!response.ok) throw new Error("Failed to fetch appointments");
+      return response.json();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <motion.div 
       variants={container}
@@ -56,7 +87,7 @@ export default function Dashboard() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Bom dia, Rafael 👋</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Bom dia! 👋</h1>
           <p className="text-gray-400">Aqui está o resumo da sua operação hoje.</p>
         </div>
         <div className="flex gap-3">
@@ -73,40 +104,91 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { title: "Faturamento Hoje", value: "R$ 1.240", change: "+12%", trend: "up", icon: AlertCircle }, // Using AlertCircle as placeholder if needed, but dollar sign is better. Wait, I can customize.
-          { title: "Agendamentos", value: "18", change: "+4", trend: "up", icon: Car },
-          { title: "Ticket Médio", value: "R$ 85", change: "-2%", trend: "down", icon: UserPlus },
-          { title: "Taxa Ocupação", value: "92%", change: "+15%", trend: "up", icon: CheckCircle2 },
-        ].map((stat, i) => (
-          <motion.div key={i} variants={item}>
-            <Card className="glass-card border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">
-                  {stat.title}
-                </CardTitle>
-                <stat.icon className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="flex items-center text-xs">
-                  {stat.trend === "up" ? (
-                    <span className="text-emerald-400 flex items-center">
-                      <ArrowUpRight className="h-3 w-3 mr-1" />
-                      {stat.change}
-                    </span>
-                  ) : (
-                    <span className="text-rose-400 flex items-center">
-                      <ArrowDownRight className="h-3 w-3 mr-1" />
-                      {stat.change}
-                    </span>
-                  )}
-                  <span className="text-gray-500 ml-2">vs. ontem</span>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+        <motion.div variants={item}>
+          <Card className="glass-card border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">
+                Faturamento Hoje
+              </CardTitle>
+              <AlertCircle className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white mb-1">
+                R$ {stats?.todayRevenue?.toFixed(2) || '0.00'}
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-emerald-400 flex items-center">
+                  <ArrowUpRight className="h-3 w-3 mr-1" />
+                  +12%
+                </span>
+                <span className="text-gray-500 ml-2">vs. ontem</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={item}>
+          <Card className="glass-card border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">
+                Agendamentos
+              </CardTitle>
+              <Car className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white mb-1">{stats?.todayAppointments || 0}</div>
+              <div className="flex items-center text-xs">
+                <span className="text-emerald-400 flex items-center">
+                  <ArrowUpRight className="h-3 w-3 mr-1" />
+                  +4
+                </span>
+                <span className="text-gray-500 ml-2">vs. ontem</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={item}>
+          <Card className="glass-card border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">
+                Ticket Médio
+              </CardTitle>
+              <UserPlus className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white mb-1">R$ 85,00</div>
+              <div className="flex items-center text-xs">
+                <span className="text-rose-400 flex items-center">
+                  <ArrowDownRight className="h-3 w-3 mr-1" />
+                  -2%
+                </span>
+                <span className="text-gray-500 ml-2">vs. ontem</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={item}>
+          <Card className="glass-card border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-400">
+                Taxa Ocupação
+              </CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white mb-1">92%</div>
+              <div className="flex items-center text-xs">
+                <span className="text-emerald-400 flex items-center">
+                  <ArrowUpRight className="h-3 w-3 mr-1" />
+                  +15%
+                </span>
+                <span className="text-gray-500 ml-2">vs. ontem</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Main Content Grid */}
@@ -169,21 +251,20 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { time: "14:00", client: "João Silva", car: "Honda Civic", type: "Lavagem Completa", status: "Confirmado" },
-                  { time: "15:30", client: "Maria Oliveira", car: "Toyota Corolla", type: "Polimento", status: "Em andamento" },
-                  { time: "17:00", client: "Carlos Souza", car: "Jeep Compass", type: "Higienização", status: "Pendente" },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer border border-transparent hover:border-white/5">
+                {todayAppointments?.slice(0, 3).map((appointment: any) => (
+                  <div key={appointment.id} className="flex items-start gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer border border-transparent hover:border-white/5">
                     <div className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-bold font-mono">
-                      {item.time}
+                      {format(new Date(appointment.scheduledAt), 'HH:mm')}
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-white">{item.client}</h4>
-                      <p className="text-xs text-gray-400">{item.car} • {item.type}</p>
+                      <h4 className="text-sm font-semibold text-white">{appointment.customer?.name}</h4>
+                      <p className="text-xs text-gray-400">{appointment.vehicle?.brand} {appointment.vehicle?.model} • {appointment.service?.name}</p>
                     </div>
                   </div>
                 ))}
+                {(!todayAppointments || todayAppointments.length === 0) && (
+                  <p className="text-sm text-gray-400">Nenhum agendamento para hoje.</p>
+                )}
               </div>
               <Button variant="ghost" className="w-full mt-4 text-primary hover:text-primary hover:bg-primary/10">
                 Ver agenda completa
@@ -202,8 +283,8 @@ export default function Dashboard() {
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-red-200">2 veículos atrasados</p>
-                  <p className="text-xs text-red-300/70 mt-1">Verifique o box de lavagem 3 e 4.</p>
+                  <p className="text-sm font-medium text-red-200">Nenhum atraso no momento</p>
+                  <p className="text-xs text-red-300/70 mt-1">Operação dentro do prazo!</p>
                 </div>
               </div>
             </CardContent>
