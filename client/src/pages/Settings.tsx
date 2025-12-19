@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Store, User, Bell, Loader2, Copy, ExternalLink, Save, Phone, Mail, MapPin, Lock } from "lucide-react";
+import { Store, User, Bell, Loader2, Copy, ExternalLink, Save, Phone, Mail, MapPin, Lock, Camera } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function Settings() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: settings, isLoading } = useQuery({
     queryKey: ["/api/settings"],
@@ -149,8 +150,53 @@ export default function Settings() {
     changePasswordMutation.mutate(passwordForm);
   };
 
+  const uploadAvatarMutation = useMutation({
+    mutationFn: async (avatarUrl: string) => {
+      const response = await fetch("/api/auth/upload-avatar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ avatarUrl }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao atualizar foto");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast.success("Foto atualizada com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
   const handleAvatarChange = () => {
-    toast.info("Funcionalidade de upload de foto em breve!");
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      toast.error("Por favor, selecione uma imagem");
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      uploadAvatarMutation.mutate(base64);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleCopyBookingUrl = () => {
@@ -323,18 +369,39 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                <Avatar className="h-20 w-20 border-2 border-white/10">
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback className="bg-primary/20 text-primary text-xl">AD</AvatarFallback>
-                </Avatar>
-                <Button 
-                  variant="outline" 
-                  className="border-white/10 text-white hover:bg-white/10"
-                  onClick={handleAvatarChange}
-                  data-testid="button-change-photo"
-                >
-                  Alterar Foto
-                </Button>
+                <div className="relative">
+                  <Avatar className="h-20 w-20 border-2 border-white/10">
+                    <AvatarImage src={user?.avatarUrl || ""} />
+                    <AvatarFallback className="bg-primary/20 text-primary text-xl">
+                      {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  {uploadAvatarMutation.isPending && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                      <Loader2 className="w-6 h-6 animate-spin text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    data-testid="input-avatar-file"
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="border-white/10 text-white hover:bg-white/10"
+                    onClick={handleAvatarChange}
+                    disabled={uploadAvatarMutation.isPending}
+                    data-testid="button-change-photo"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Alterar Foto
+                  </Button>
+                </div>
               </div>
 
               <form onSubmit={handleAccountUpdate}>

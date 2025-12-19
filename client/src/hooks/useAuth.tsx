@@ -7,6 +7,7 @@ interface User {
   email: string;
   name: string;
   role: string;
+  avatarUrl?: string | null;
 }
 
 interface Business {

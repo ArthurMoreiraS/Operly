@@ -116,9 +116,9 @@ export function Header() {
           <DropdownMenuTrigger className="outline-none" data-testid="button-user-menu">
             <div className="flex items-center gap-2 lg:gap-3 cursor-pointer p-1 pr-2 rounded-full hover:bg-white/5 transition-colors">
               <Avatar className="h-8 w-8 lg:h-9 lg:w-9 border-2 border-white/10">
-                <AvatarImage src="" />
+                <AvatarImage src={user?.avatarUrl || ""} />
                 <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                  {business ? getInitials(business.name) : 'OP'}
+                  {user ? getInitials(user.name) : 'OP'}
                 </AvatarFallback>
               </Avatar>
               <div className="text-left hidden sm:block">

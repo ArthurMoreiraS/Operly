@@ -97,7 +97,7 @@ export async function registerRoutes(
       });
 
       res.json({ 
-        user: { id: user.id, name: user.name, email: user.email, role: user.role },
+        user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl },
         business: business
       });
     } catch (error) {
@@ -130,7 +130,7 @@ export async function registerRoutes(
       if (!updatedUser) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-      res.json({ id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role });
+      res.json({ id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role, avatarUrl: updatedUser.avatarUrl });
     } catch (error) {
       res.status(500).json({ error: "Erro ao atualizar perfil" });
     }
@@ -185,9 +185,26 @@ export async function registerRoutes(
     const business = await storage.getBusiness(user.businessId);
 
     res.json({ 
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl },
       business: business
     });
+  });
+
+  // Upload avatar
+  app.post("/api/auth/upload-avatar", authMiddleware, async (req, res) => {
+    try {
+      const { avatarUrl } = req.body;
+      if (!avatarUrl || typeof avatarUrl !== 'string') {
+        return res.status(400).json({ error: "URL da imagem é obrigatória" });
+      }
+      const updatedUser = await storage.updateUser(req.user!.id, { avatarUrl });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      res.json({ id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role, avatarUrl: updatedUser.avatarUrl });
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar foto" });
+    }
   });
 
   // ==================== LEAD ROUTES (Public) ====================
