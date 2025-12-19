@@ -236,7 +236,12 @@ export async function registerRoutes(
     }
   });
 
+  // Note: adminOnly middleware is defined after the protected routes section,
+  // so we need to check role inline here temporarily
   app.get("/api/leads", authMiddleware, async (req, res) => {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ error: "Acesso negado. Apenas administradores." });
+    }
     try {
       const leads = await storage.getLeads();
       res.json(leads);
