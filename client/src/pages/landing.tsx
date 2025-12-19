@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Hero } from "@/components/landing/hero";
 import { ProblemSolution } from "@/components/landing/problem-solution";
 import { SocialProof } from "@/components/landing/social-proof";
 import { LeadForm } from "@/components/landing/lead-form";
+import { LoginModal } from "@/components/landing/login-modal";
 import logo from "@assets/Letter_R_(1)_1766118629756.png";
 import { Button } from "@/components/ui/button";
 
-function Navbar() {
+function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
   const scrollToForm = () => {
     document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -19,7 +21,13 @@ function Navbar() {
         </div>
         
         <div className="flex items-center gap-4">
-          <a href="/dashboard" className="hidden md:block text-sm text-muted-foreground hover:text-white transition-colors" data-testid="link-login">Login</a>
+          <button 
+            onClick={onLoginClick}
+            className="hidden md:block text-sm text-muted-foreground hover:text-white transition-colors cursor-pointer" 
+            data-testid="link-login"
+          >
+            Login
+          </button>
           <Button 
             size="sm" 
             className="rounded-full px-6 bg-white/10 hover:bg-white/20 text-white border border-white/5"
@@ -57,14 +65,17 @@ function Footer() {
 }
 
 export default function LandingPage() {
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
-      <Navbar />
+      <Navbar onLoginClick={() => setLoginModalOpen(true)} />
       <Hero />
       <ProblemSolution />
       <SocialProof />
       <LeadForm />
       <Footer />
+      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
     </div>
   );
 }
