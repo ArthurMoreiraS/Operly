@@ -197,6 +197,19 @@ export async function registerRoutes(
       if (!avatarUrl || typeof avatarUrl !== 'string') {
         return res.status(400).json({ error: "URL da imagem é obrigatória" });
       }
+      
+      // Validate data URL format and image type
+      const dataUrlPattern = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/;
+      if (!dataUrlPattern.test(avatarUrl)) {
+        return res.status(400).json({ error: "Formato de imagem inválido. Use PNG, JPEG, GIF ou WebP." });
+      }
+      
+      // Validate size (max 2MB for base64, which is ~1.5MB actual file)
+      const maxSizeBytes = 2 * 1024 * 1024;
+      if (avatarUrl.length > maxSizeBytes) {
+        return res.status(400).json({ error: "Imagem muito grande. Máximo permitido: 1.5MB" });
+      }
+      
       const updatedUser = await storage.updateUser(req.user!.id, { avatarUrl });
       if (!updatedUser) {
         return res.status(404).json({ error: "Usuário não encontrado" });
