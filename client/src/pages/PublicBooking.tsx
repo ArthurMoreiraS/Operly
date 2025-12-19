@@ -10,12 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Clock, Car, User, Check, Loader2, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, Car, User, Check, Loader2, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { format, addDays, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useRoute } from "wouter";
 import Logo from "@assets/Letter_R_(1)_1766118629756.png";
 
 const timeSlots = [
@@ -29,6 +30,9 @@ const carBrands = [
 ];
 
 export default function PublicBooking() {
+  const [, params] = useRoute("/agendar/:slug");
+  const slug = params?.slug;
+
   const [step, setStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -45,30 +49,41 @@ export default function PublicBooking() {
     serviceId: "",
   });
 
-  const { data: services } = useQuery({
-    queryKey: ["/api/services"],
+  const { data: business, isLoading: businessLoading, error: businessError } = useQuery({
+    queryKey: ["/api/public/business", slug],
     queryFn: async () => {
-      const response = await fetch("/api/services");
+      const response = await fetch(`/api/public/business/${slug}`);
+      if (!response.ok) throw new Error("Business not found");
+      return response.json();
+    },
+    enabled: !!slug,
+  });
+
+  const { data: services } = useQuery({
+    queryKey: ["/api/public/services", slug],
+    queryFn: async () => {
+      const response = await fetch(`/api/public/business/${slug}/services`);
       if (!response.ok) throw new Error("Failed to fetch services");
       return response.json();
     },
+    enabled: !!slug && !!business,
   });
 
   const { data: appointments } = useQuery({
-    queryKey: ["/api/appointments", selectedDate],
+    queryKey: ["/api/public/appointments", slug, selectedDate],
     queryFn: async () => {
       if (!selectedDate) return [];
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const response = await fetch(`/api/appointments?date=${dateStr}`);
-      if (!response.ok) throw new Error("Failed to fetch appointments");
+      const response = await fetch(`/api/public/business/${slug}/appointments?date=${dateStr}`);
+      if (!response.ok) return [];
       return response.json();
     },
-    enabled: !!selectedDate,
+    enabled: !!selectedDate && !!slug && !!business,
   });
 
   const bookMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/public/book", {
+      const response = await fetch(`/api/public/book/${slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -84,6 +99,59 @@ export default function PublicBooking() {
       toast.error("Erro ao realizar agendamento. Tente novamente.");
     },
   });
+
+  if (!slug) {
+    return (
+      <div className="min-h-screen bg-[#222a34] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none z-50 mix-blend-overlay"></div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
+        >
+          <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-8 h-8 text-yellow-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Página Não Encontrada</h1>
+          <p className="text-gray-400 mb-6">
+            Para agendar um serviço, acesse o link personalizado do estabelecimento.
+          </p>
+          <p className="text-sm text-gray-500">
+            Exemplo: /agendar/nome-do-estabelecimento
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (businessLoading) {
+    return (
+      <div className="min-h-screen bg-[#222a34] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (businessError || !business) {
+    return (
+      <div className="min-h-screen bg-[#222a34] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none z-50 mix-blend-overlay"></div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
+        >
+          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-8 h-8 text-red-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Estabelecimento Não Encontrado</h1>
+          <p className="text-gray-400 mb-6">
+            Não encontramos um estabelecimento com este link. Verifique se o endereço está correto.
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
 
   const activeServices = services?.filter((s: any) => s.isActive) || [];
 
@@ -179,12 +247,14 @@ export default function PublicBooking() {
 
       <div className="max-w-lg mx-auto relative z-10">
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-primary/20 border border-white/10 bg-[#222a34]">
-            <img src={Logo} alt="Logo" className="w-full h-full object-cover scale-110" />
+          <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-primary/20 border border-white/10 bg-[#222a34] flex items-center justify-center">
+            <span className="text-xl font-bold text-primary">
+              {business.name?.charAt(0).toUpperCase() || 'O'}
+            </span>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Agendar Serviço</h1>
-            <p className="text-sm text-gray-400">Escolha o melhor horário para você</p>
+            <h1 className="text-2xl font-bold text-white">{business.name}</h1>
+            <p className="text-sm text-gray-400">Agende seu serviço online</p>
           </div>
         </div>
 

@@ -279,6 +279,23 @@ export async function registerRoutes(
     }
   });
 
+  // Get public appointments for availability check (only returns booked times, no personal data)
+  app.get("/api/public/business/:slug/appointments", async (req, res) => {
+    try {
+      const business = await storage.getBusinessBySlug(req.params.slug);
+      if (!business) {
+        return res.status(404).json({ error: "Business not found" });
+      }
+      const dateStr = req.query.date as string;
+      const date = dateStr ? new Date(dateStr) : undefined;
+      const appointments = await storage.getAppointments(business.id, date);
+      // Only return scheduledAt and duration for availability checking (no personal data)
+      res.json(appointments.map(a => ({ scheduledAt: a.scheduledAt, duration: a.duration })));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch appointments" });
+    }
+  });
+
   // Create public booking
   app.post("/api/public/book/:slug", async (req, res) => {
     try {
@@ -288,6 +305,12 @@ export async function registerRoutes(
       }
 
       const { customer: customerData, vehicle: vehicleData, appointment: appointmentData } = req.body;
+
+      // Validate that the service belongs to this business
+      const service = await storage.getService(appointmentData.serviceId);
+      if (!service || service.businessId !== business.id) {
+        return res.status(400).json({ error: "Serviço não encontrado ou não pertence a este estabelecimento" });
+      }
 
       // Check if customer already exists by phone
       let customer = await storage.getCustomerByPhone(business.id, customerData.phone);
