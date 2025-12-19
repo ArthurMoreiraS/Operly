@@ -799,14 +799,14 @@ export async function registerRoutes(
         address: address || null,
       });
 
-      // Create user
+      // Create user (regular user, not admin)
       const passwordHash = hashPassword(userPassword);
       const user = await storage.createUser({
         businessId: business.id,
         name: userName || businessName,
         email: userEmail,
         passwordHash,
-        role: 'admin',
+        role: 'user',
       });
 
       res.status(201).json({
