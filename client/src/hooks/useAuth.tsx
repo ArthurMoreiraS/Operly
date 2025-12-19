@@ -55,8 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(['/api/auth/me'], data);
       setLocation('/dashboard');
     },
   });
