@@ -24,6 +24,7 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useLocation } from "wouter";
 
 const data = [
   { name: "Seg", value: 1200 },
@@ -51,6 +52,8 @@ const item = {
 };
 
 export default function Dashboard() {
+  const [, navigate] = useLocation();
+  
   const { data: stats, isLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
     queryFn: async () => {
@@ -91,11 +94,20 @@ export default function Dashboard() {
           <p className="text-gray-400">Aqui está o resumo da sua operação hoje.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="glass-card border-white/10 hover:bg-white/10 text-white">
+          <Button 
+            variant="outline" 
+            className="glass-card border-white/10 hover:bg-white/10 text-white"
+            onClick={() => navigate("/finance")}
+            data-testid="button-history"
+          >
             <Clock className="w-4 h-4 mr-2" />
             Histórico
           </Button>
-          <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-none">
+          <Button 
+            className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-none"
+            onClick={() => navigate("/schedule")}
+            data-testid="button-new-appointment"
+          >
             <CalendarPlus className="w-4 h-4 mr-2" />
             Novo Agendamento
           </Button>
@@ -266,7 +278,12 @@ export default function Dashboard() {
                   <p className="text-sm text-gray-400">Nenhum agendamento para hoje.</p>
                 )}
               </div>
-              <Button variant="ghost" className="w-full mt-4 text-primary hover:text-primary hover:bg-primary/10">
+              <Button 
+                variant="ghost" 
+                className="w-full mt-4 text-primary hover:text-primary hover:bg-primary/10"
+                onClick={() => navigate("/schedule")}
+                data-testid="button-view-schedule"
+              >
                 Ver agenda completa
               </Button>
             </CardContent>

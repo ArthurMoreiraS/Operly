@@ -9,7 +9,7 @@ import {
   Settings,
   LogOut
 } from "lucide-react";
-import Logo from "@assets/3_1766116564466.png";
+import Logo from "@assets/Letter_R_1766117839249.png";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
