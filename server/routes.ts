@@ -14,6 +14,7 @@ import {
   type Business
 } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
 // Extend Express Request to include user and business
@@ -27,13 +28,24 @@ declare global {
   }
 }
 
-// Simple password hashing (for demo - use bcrypt in production)
+// Secure password hashing with bcrypt
 function hashPassword(password: string): string {
+  return bcrypt.hashSync(password, 10);
+}
+
+// Legacy SHA-256 hash for migration (temporary)
+function legacyHashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+// Verify password - supports both bcrypt and legacy SHA-256
 function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash;
+  // Check if it's a bcrypt hash (starts with $2a$ or $2b$)
+  if (hash.startsWith('$2a$') || hash.startsWith('$2b$')) {
+    return bcrypt.compareSync(password, hash);
+  }
+  // Legacy SHA-256 verification
+  return legacyHashPassword(password) === hash;
 }
 
 // Auth middleware
@@ -84,6 +96,12 @@ export async function registerRoutes(
 
       if (!verifyPassword(password, user.passwordHash)) {
         return res.status(401).json({ error: "Email ou senha incorretos" });
+      }
+
+      // Auto-upgrade legacy SHA-256 hash to bcrypt
+      if (!user.passwordHash.startsWith('$2a$') && !user.passwordHash.startsWith('$2b$')) {
+        const newHash = hashPassword(password);
+        await storage.updateUser(user.id, { passwordHash: newHash });
       }
 
       const session = await storage.createSession(user.id);
