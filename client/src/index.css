@@ -53,58 +53,21 @@
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
   --font-sans: 'Inter', sans-serif;
-  --radius: 1.25rem; /* 20px as requested */
+  --radius: 1.25rem;
 }
 
-/* BASE STYLES - Using the requested Dark Blue #222a34 and Coral #e07954 */
 :root {
-
-  /* Dark Mode by Default/Core Colors Landing page*/
-  --background: 213 21% 17%; /* #222a34 - Dark Blue */
-  --foreground: 210 40% 98%;
-
-  --card: 215 25% 20%; /* Slightly lighter than bg */
-  --card-foreground: 210 40% 98%;
-
-  --popover: 213 21% 17%;
-  --popover-foreground: 210 40% 98%;
-
-  --primary: 16 69% 60%; /* #e07954 - Coral */
-  --primary-foreground: 210 40% 98%;
-
-  --secondary: 215 25% 27%;
-  --secondary-foreground: 210 40% 98%;
-
-  --muted: 215 25% 27%;
-  --muted-foreground: 215 20% 65%;
-
-  --accent: 215 25% 27%;
-  --accent-foreground: 210 40% 98%;
-
-  --destructive: 0 62% 30%;
-  --destructive-foreground: 210 40% 98%;
-
-  --border: 215 25% 27%;
-  --input: 215 25% 27%;
-  --ring: 16 69% 60%;
-
-  --radius: 1.5rem; 
-  /* 24px as requested */
-  /* Default to Dark Mode because the design is dark-themed */
   color-scheme: dark;
   
-  /* Background: #222a34 -> 213 21% 17% */
   --background: 213 21% 17%;
   --foreground: 210 20% 98%;
 
-  /* Glass Card Base - slightly lighter than bg */
   --card: 213 21% 22%;
   --card-foreground: 210 20% 98%;
 
   --popover: 213 21% 22%;
   --popover-foreground: 210 20% 98%;
 
-  /* Primary: #e07954 -> 16 68% 60% */
   --primary: 16 68% 60%;
   --primary-foreground: 210 20% 98%;
 
@@ -126,13 +89,13 @@
 
   --radius: 1.25rem;
 
-  --chart-1: 16 68% 60%; /* Coral */
-  --chart-2: 173 58% 39%; /* Teal/Greenish */
-  --chart-3: 197 37% 24%; /* Blue */
-  --chart-4: 43 74% 66%; /* Yellow */
-  --chart-5: 27 87% 67%; /* Orange */
+  --chart-1: 16 68% 60%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
 
-  --sidebar: 213 21% 15%; /* Slightly darker than bg */
+  --sidebar: 213 21% 15%;
   --sidebar-foreground: 210 20% 98%;
   --sidebar-primary: 16 68% 60%;
   --sidebar-primary-foreground: 210 20% 98%;
@@ -163,6 +126,18 @@
   .text-gradient {
     @apply bg-clip-text text-transparent bg-linear-to-r from-white to-white/70;
   }
+
+  .glassy {
+    @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-xl;
+  }
+
+  .glassy-card {
+    @apply bg-white/5 backdrop-blur-md border border-white/5 shadow-lg;
+  }
+
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent bg-linear-to-r from-primary to-orange-400;
+  }
 }
 
 @keyframes marquee {
@@ -177,19 +152,3 @@
 .animate-marquee {
   animation: marquee 20s linear infinite;
 }
-  .glassy {
-      @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-xl;
-    }
-
-    .glassy-card {
-      @apply bg-white/5 backdrop-blur-md border border-white/5 shadow-lg;
-    }
-
-    .text-gradient {
-      @apply bg-clip-text text-transparent bg-linear-to-r from-white to-white/70;
-    }
-
-    .text-gradient-primary {
-      @apply bg-clip-text text-transparent bg-linear-to-r from-primary to-orange-400;
-    }
-  }
