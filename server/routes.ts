@@ -123,11 +123,14 @@ export async function registerRoutes(
   app.patch("/api/auth/update-profile", authMiddleware, async (req, res) => {
     try {
       const { name } = req.body;
-      if (!name) {
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
         return res.status(400).json({ error: "Nome é obrigatório" });
       }
-      const updatedUser = await storage.updateUser(req.user!.id, { name });
-      res.json(updatedUser);
+      const updatedUser = await storage.updateUser(req.user!.id, { name: name.trim() });
+      if (!updatedUser) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+      res.json({ id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role });
     } catch (error) {
       res.status(500).json({ error: "Erro ao atualizar perfil" });
     }
@@ -336,7 +339,8 @@ export async function registerRoutes(
 
   app.post("/api/customers", authMiddleware, async (req, res) => {
     try {
-      const data = insertCustomerSchema.parse({ ...req.body, businessId: req.business!.id });
+      const { businessId: _, ...clientData } = req.body;
+      const data = insertCustomerSchema.parse({ ...clientData, businessId: req.business!.id });
       const customer = await storage.createCustomer(data);
       res.status(201).json(customer);
     } catch (error) {
@@ -354,7 +358,8 @@ export async function registerRoutes(
       if (!existing || existing.businessId !== req.business!.id) {
         return res.status(404).json({ error: "Customer not found" });
       }
-      const data = insertCustomerSchema.partial().parse(req.body);
+      const { businessId: _, ...clientData } = req.body;
+      const data = insertCustomerSchema.partial().parse(clientData);
       const customer = await storage.updateCustomer(id, data);
       res.json(customer);
     } catch (error) {
