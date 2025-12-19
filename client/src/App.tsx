@@ -5,6 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
+import Schedule from "@/pages/Schedule";
+import Customers from "@/pages/Customers";
+import Services from "@/pages/Services";
+import Finance from "@/pages/Finance";
+import Settings from "@/pages/Settings";
 import { Layout } from "@/components/layout/Layout";
 
 function Router() {
@@ -12,9 +17,11 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard} />
-        {/* Placeholder routes for other menu items to prevent 404s on demo clicks if we wanted, 
-            but for now let them fall through or we can add empty placeholders. 
-            Let's just use NotFound for unimplemented routes to be safe. */}
+        <Route path="/schedule" component={Schedule} />
+        <Route path="/customers" component={Customers} />
+        <Route path="/services" component={Services} />
+        <Route path="/finance" component={Finance} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
