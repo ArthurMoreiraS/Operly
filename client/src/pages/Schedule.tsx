@@ -2,13 +2,30 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, Clock, Plus, ChevronLeft, ChevronRight, Filter, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar as CalendarIcon, Clock, Plus, ChevronLeft, ChevronRight, Filter, Loader2, X } from "lucide-react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
-const timeSlots = Array.from({ length: 11 }, (_, i) => i + 8); // 8:00 to 18:00
+const timeSlots = Array.from({ length: 11 }, (_, i) => i + 8);
 
 const statusColors: Record<string, string> = {
   confirmed: "bg-emerald-500/20 border-emerald-500/50 text-emerald-200",
@@ -17,11 +34,34 @@ const statusColors: Record<string, string> = {
   completed: "bg-gray-500/20 border-gray-500/50 text-gray-200",
 };
 
+const statusLabels: Record<string, string> = {
+  confirmed: "Confirmado",
+  "in-progress": "Em Andamento",
+  pending: "Pendente",
+  completed: "Concluído",
+};
+
 export default function Schedule() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedHour, setSelectedHour] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<"day" | "week">("day");
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    customerId: "",
+    vehicleId: "",
+    serviceId: "",
+    scheduledTime: "09:00",
+    status: "pending",
+  });
+
+  const queryClient = useQueryClient();
 
   const { data: appointments, isLoading } = useQuery({
-    queryKey: ["/api/appointments", selectedDate],
+    queryKey: ["/api/appointments", format(selectedDate, 'yyyy-MM-dd')],
     queryFn: async () => {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
       const response = await fetch(`/api/appointments?date=${dateStr}`);
@@ -29,6 +69,128 @@ export default function Schedule() {
       return response.json();
     },
   });
+
+  const { data: customers } = useQuery({
+    queryKey: ["/api/customers"],
+    queryFn: async () => {
+      const response = await fetch("/api/customers");
+      if (!response.ok) throw new Error("Failed to fetch customers");
+      return response.json();
+    },
+  });
+
+  const { data: services } = useQuery({
+    queryKey: ["/api/services"],
+    queryFn: async () => {
+      const response = await fetch("/api/services");
+      if (!response.ok) throw new Error("Failed to fetch services");
+      return response.json();
+    },
+  });
+
+  const { data: vehicles } = useQuery({
+    queryKey: ["/api/vehicles", formData.customerId],
+    queryFn: async () => {
+      if (!formData.customerId) return [];
+      const response = await fetch(`/api/vehicles?customerId=${formData.customerId}`);
+      if (!response.ok) throw new Error("Failed to fetch vehicles");
+      return response.json();
+    },
+    enabled: !!formData.customerId,
+  });
+
+  const createAppointmentMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to create appointment");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast.success("Agendamento criado com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao criar agendamento");
+    },
+  });
+
+  const updateAppointmentMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error("Failed to update appointment");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      toast.success("Status atualizado!");
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      customerId: "",
+      vehicleId: "",
+      serviceId: "",
+      scheduledTime: "09:00",
+      status: "pending",
+    });
+    setSelectedHour(null);
+  };
+
+  const handleCreateAppointment = () => {
+    if (!formData.customerId || !formData.vehicleId || !formData.serviceId) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    const selectedService = services?.find((s: any) => s.id === parseInt(formData.serviceId));
+    const [hours, minutes] = formData.scheduledTime.split(':').map(Number);
+    const scheduledAt = new Date(selectedDate);
+    scheduledAt.setHours(hours, minutes, 0, 0);
+
+    createAppointmentMutation.mutate({
+      customerId: parseInt(formData.customerId),
+      vehicleId: parseInt(formData.vehicleId),
+      serviceId: parseInt(formData.serviceId),
+      scheduledAt: scheduledAt.toISOString(),
+      duration: selectedService?.duration || 60,
+      status: formData.status,
+    });
+  };
+
+  const openNewAppointmentDialog = (hour?: number) => {
+    if (hour !== undefined) {
+      setFormData(prev => ({ ...prev, scheduledTime: `${hour.toString().padStart(2, '0')}:00` }));
+      setSelectedHour(hour);
+    }
+    setIsDialogOpen(true);
+  };
+
+  const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+  const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+
+  const handleDayClick = (day: Date) => {
+    setSelectedDate(day);
+  };
+
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const startDayOfWeek = getDay(monthStart);
+
+  const filteredAppointments = filterStatus 
+    ? appointments?.filter((a: any) => a.status === filterStatus) 
+    : appointments;
 
   if (isLoading) {
     return (
@@ -50,60 +212,139 @@ export default function Schedule() {
           <p className="text-gray-400">Gerencie sua agenda de serviços.</p>
         </div>
         <div className="flex gap-3">
-           <Button variant="outline" className="glass-card border-white/10 hover:bg-white/10 text-white">
+          <Button 
+            variant="outline" 
+            className={`glass-card border-white/10 hover:bg-white/10 text-white ${showFilters ? 'bg-white/10' : ''}`}
+            onClick={() => setShowFilters(!showFilters)}
+            data-testid="button-filters"
+          >
             <Filter className="w-4 h-4 mr-2" />
             Filtros
           </Button>
-          <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-none">
+          <Button 
+            className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-none"
+            onClick={() => openNewAppointmentDialog()}
+            data-testid="button-new-appointment"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Novo Agendamento
           </Button>
         </div>
       </div>
 
+      {showFilters && (
+        <motion.div 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="glass-card border-white/5 p-4 rounded-xl"
+        >
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              size="sm" 
+              variant={filterStatus === null ? "default" : "outline"}
+              className={filterStatus === null ? "bg-primary" : "border-white/10 text-gray-300"}
+              onClick={() => setFilterStatus(null)}
+            >
+              Todos
+            </Button>
+            {Object.entries(statusLabels).map(([status, label]) => (
+              <Button 
+                key={status}
+                size="sm" 
+                variant={filterStatus === status ? "default" : "outline"}
+                className={filterStatus === status ? "bg-primary" : "border-white/10 text-gray-300"}
+                onClick={() => setFilterStatus(status)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1 space-y-6">
-           <Card className="glass-card border-white/5">
+          <Card className="glass-card border-white/5">
             <CardContent className="p-0">
-               <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                 <button className="p-1 hover:bg-white/5 rounded-full"><ChevronLeft className="w-4 h-4 text-gray-400" /></button>
-                 <span className="font-semibold text-white">{format(selectedDate, 'MMMM yyyy', { locale: ptBR })}</span>
-                 <button className="p-1 hover:bg-white/5 rounded-full"><ChevronRight className="w-4 h-4 text-gray-400" /></button>
-               </div>
-               <div className="p-4 grid grid-cols-7 gap-2 text-center text-sm">
-                 {["D", "S", "T", "Q", "Q", "S", "S"].map((d, idx) => (
-                   <span key={`weekday-${idx}`} className="text-gray-500 font-medium">{d}</span>
-                 ))}
-                 {Array.from({length: 31}, (_, i) => {
-                   const day = i + 1;
-                   const isSelected = day === selectedDate.getDate();
-                   return (
-                     <button 
-                      key={`day-${day}`}
-                      className={`h-8 w-8 rounded-full flex items-center justify-center transition-all ${isSelected ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-300 hover:bg-white/5'}`}
-                     >
-                       {day}
-                     </button>
-                   );
-                 })}
-               </div>
+              <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                <button 
+                  onClick={handlePrevMonth}
+                  className="p-1 hover:bg-white/5 rounded-full transition-colors"
+                  data-testid="button-prev-month"
+                >
+                  <ChevronLeft className="w-4 h-4 text-gray-400" />
+                </button>
+                <span className="font-semibold text-white capitalize">
+                  {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+                </span>
+                <button 
+                  onClick={handleNextMonth}
+                  className="p-1 hover:bg-white/5 rounded-full transition-colors"
+                  data-testid="button-next-month"
+                >
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+              <div className="p-4 grid grid-cols-7 gap-1 text-center text-sm">
+                {["D", "S", "T", "Q", "Q", "S", "S"].map((d, idx) => (
+                  <span key={`weekday-${idx}`} className="text-gray-500 font-medium h-8 flex items-center justify-center">{d}</span>
+                ))}
+                {Array.from({ length: startDayOfWeek }).map((_, idx) => (
+                  <div key={`empty-${idx}`} className="h-8" />
+                ))}
+                {daysInMonth.map((day) => {
+                  const isSelected = isSameDay(day, selectedDate);
+                  const isToday = isSameDay(day, new Date());
+                  return (
+                    <button 
+                      key={day.toISOString()}
+                      onClick={() => handleDayClick(day)}
+                      className={`h-8 w-8 rounded-full flex items-center justify-center transition-all text-sm mx-auto
+                        ${isSelected 
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+                          : isToday 
+                            ? 'bg-white/10 text-white' 
+                            : 'text-gray-300 hover:bg-white/5'
+                        }`}
+                      data-testid={`day-${format(day, 'yyyy-MM-dd')}`}
+                    >
+                      {format(day, 'd')}
+                    </button>
+                  );
+                })}
+              </div>
             </CardContent>
-           </Card>
+          </Card>
 
-           <Card className="glass-card border-white/5">
-             <CardHeader>
-               <h3 className="text-white text-sm font-semibold">Próximos Lembretes</h3>
-             </CardHeader>
-             <CardContent className="space-y-4">
-               <div className="flex items-start gap-3">
-                 <div className="w-2 h-2 rounded-full bg-yellow-500 mt-2" />
-                 <div>
-                   <p className="text-sm text-white">Confirmar agendamentos</p>
-                   <p className="text-xs text-gray-500">Hoje</p>
-                 </div>
-               </div>
-             </CardContent>
-           </Card>
+          <Card className="glass-card border-white/5">
+            <CardHeader>
+              <h3 className="text-white text-sm font-semibold">Resumo do Dia</h3>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">Total</span>
+                <span className="text-white font-medium">{appointments?.length || 0} agendamentos</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">Confirmados</span>
+                <span className="text-emerald-400 font-medium">
+                  {appointments?.filter((a: any) => a.status === 'confirmed').length || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">Pendentes</span>
+                <span className="text-amber-400 font-medium">
+                  {appointments?.filter((a: any) => a.status === 'pending').length || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 text-sm">Em andamento</span>
+                <span className="text-blue-400 font-medium">
+                  {appointments?.filter((a: any) => a.status === 'in-progress').length || 0}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="lg:col-span-3">
@@ -112,20 +353,32 @@ export default function Schedule() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white font-medium">
                   <CalendarIcon className="w-4 h-4 text-primary" />
-                  <span>{format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
+                  <span className="capitalize">{format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
                 </div>
                 <div className="flex bg-white/5 rounded-lg p-1">
-                  <button className="px-3 py-1 text-xs rounded-md bg-white/10 text-white font-medium">Dia</button>
-                  <button className="px-3 py-1 text-xs rounded-md text-gray-400 hover:text-white transition-colors">Semana</button>
+                  <button 
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${viewMode === 'day' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
+                    onClick={() => setViewMode('day')}
+                    data-testid="view-day"
+                  >
+                    Dia
+                  </button>
+                  <button 
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${viewMode === 'week' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
+                    onClick={() => setViewMode('week')}
+                    data-testid="view-week"
+                  >
+                    Semana
+                  </button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-0 relative">
+            <CardContent className="p-0 relative overflow-y-auto max-h-[550px]">
               <div className="absolute left-16 top-0 bottom-0 w-px bg-white/5 z-0" />
               
               <div className="divide-y divide-white/5">
                 {timeSlots.map((hour) => {
-                  const hourAppointments = appointments?.filter((a: any) => {
+                  const hourAppointments = filteredAppointments?.filter((a: any) => {
                     const appointmentHour = new Date(a.scheduledAt).getHours();
                     return appointmentHour === hour;
                   }) || [];
@@ -137,40 +390,58 @@ export default function Schedule() {
                       </div>
                       <div className="flex-1 p-2 relative">
                         {hourAppointments.map((appointment: any) => {
-                          const durationHours = appointment.duration / 60;
+                          const durationHours = Math.max(appointment.duration / 60, 0.5);
                           return (
                             <motion.div 
                               key={appointment.id}
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
                               className={`absolute top-1 left-2 right-2 z-10 p-3 rounded-xl border backdrop-blur-md shadow-sm cursor-pointer hover:shadow-md transition-all ${statusColors[appointment.status] || statusColors.pending}`}
-                              style={{ height: `${durationHours * 80 - 10}px` }}
+                              style={{ minHeight: `${Math.min(durationHours * 80 - 10, 70)}px` }}
+                              data-testid={`appointment-${appointment.id}`}
                             >
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h4 className="font-semibold text-sm">{appointment.customer?.name}</h4>
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-sm truncate">{appointment.customer?.name}</h4>
                                   <p className="text-xs opacity-80 mt-0.5 flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
+                                    <Clock className="w-3 h-3 shrink-0" />
                                     {format(new Date(appointment.scheduledAt), 'HH:mm')} - {appointment.duration} min
                                   </p>
                                 </div>
-                                <Badge variant="outline" className="bg-black/20 border-white/10 text-inherit backdrop-blur-sm">
-                                  {appointment.service?.name}
-                                </Badge>
+                                <Select
+                                  value={appointment.status}
+                                  onValueChange={(value) => updateAppointmentMutation.mutate({ id: appointment.id, status: value })}
+                                >
+                                  <SelectTrigger className="h-6 w-auto text-[10px] bg-black/20 border-white/10 text-inherit">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="glass-card border-white/10">
+                                    <SelectItem value="pending">Pendente</SelectItem>
+                                    <SelectItem value="confirmed">Confirmado</SelectItem>
+                                    <SelectItem value="in-progress">Em Andamento</SelectItem>
+                                    <SelectItem value="completed">Concluído</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
-                              <p className="text-xs mt-2 opacity-70 flex items-center gap-1 font-mono">
-                                {appointment.vehicle?.brand} {appointment.vehicle?.model} - {appointment.vehicle?.plate || 'Sem placa'}
+                              <p className="text-xs mt-1 opacity-70 truncate">
+                                {appointment.vehicle?.brand} {appointment.vehicle?.model} • {appointment.service?.name}
                               </p>
                             </motion.div>
                           );
                         })}
 
                         {hourAppointments.length === 0 && (
-                           <div className="w-full h-full opacity-0 group-hover:opacity-100 flex items-center justify-center">
-                              <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/10 h-8">
-                                <Plus className="w-4 h-4 mr-1" /> Adicionar
-                              </Button>
-                           </div>
+                          <div className="w-full h-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-primary hover:text-primary hover:bg-primary/10 h-8"
+                              onClick={() => openNewAppointmentDialog(hour)}
+                              data-testid={`add-appointment-${hour}`}
+                            >
+                              <Plus className="w-4 h-4 mr-1" /> Adicionar
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -181,6 +452,138 @@ export default function Schedule() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="glass-card border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">Novo Agendamento</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-gray-300">Data</Label>
+              <Input 
+                value={format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })}
+                disabled
+                className="bg-white/5 border-white/10 text-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-gray-300">Horário</Label>
+              <Select 
+                value={formData.scheduledTime} 
+                onValueChange={(value) => setFormData({...formData, scheduledTime: value})}
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Selecione o horário" />
+                </SelectTrigger>
+                <SelectContent className="glass-card border-white/10">
+                  {timeSlots.map((hour) => (
+                    <SelectItem key={hour} value={`${hour.toString().padStart(2, '0')}:00`}>
+                      {hour}:00
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-gray-300">Cliente *</Label>
+              <Select 
+                value={formData.customerId} 
+                onValueChange={(value) => setFormData({...formData, customerId: value, vehicleId: ""})}
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Selecione o cliente" />
+                </SelectTrigger>
+                <SelectContent className="glass-card border-white/10">
+                  {customers?.map((customer: any) => (
+                    <SelectItem key={customer.id} value={customer.id.toString()}>
+                      {customer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-gray-300">Veículo *</Label>
+              <Select 
+                value={formData.vehicleId} 
+                onValueChange={(value) => setFormData({...formData, vehicleId: value})}
+                disabled={!formData.customerId}
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-white disabled:opacity-50">
+                  <SelectValue placeholder={formData.customerId ? "Selecione o veículo" : "Selecione um cliente primeiro"} />
+                </SelectTrigger>
+                <SelectContent className="glass-card border-white/10">
+                  {vehicles?.map((vehicle: any) => (
+                    <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
+                      {vehicle.brand} {vehicle.model} - {vehicle.plate}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-gray-300">Serviço *</Label>
+              <Select 
+                value={formData.serviceId} 
+                onValueChange={(value) => setFormData({...formData, serviceId: value})}
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Selecione o serviço" />
+                </SelectTrigger>
+                <SelectContent className="glass-card border-white/10">
+                  {services?.map((service: any) => (
+                    <SelectItem key={service.id} value={service.id.toString()}>
+                      {service.name} - R$ {parseFloat(service.price).toFixed(2)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-gray-300">Status</Label>
+              <Select 
+                value={formData.status} 
+                onValueChange={(value) => setFormData({...formData, status: value})}
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="glass-card border-white/10">
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="confirmed">Confirmado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsDialogOpen(false); resetForm(); }}
+              className="border-white/10 text-gray-300 hover:bg-white/10"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateAppointment}
+              className="bg-primary hover:bg-primary/90 text-white"
+              disabled={createAppointmentMutation.isPending}
+            >
+              {createAppointmentMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Criar Agendamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
