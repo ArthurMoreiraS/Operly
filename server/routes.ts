@@ -337,9 +337,12 @@ export async function registerRoutes(
 
       // Check if customer already exists by phone
       const existingCustomers = await storage.getCustomers();
-      let customer = existingCustomers.find((c: any) => c.phone === customerData.phone);
+      const existingCustomer = existingCustomers.find((c) => c.phone === customerData.phone);
 
-      if (!customer) {
+      let customer;
+      if (existingCustomer) {
+        customer = existingCustomer;
+      } else {
         customer = await storage.createCustomer({
           name: customerData.name,
           phone: customerData.phone,
@@ -350,11 +353,14 @@ export async function registerRoutes(
 
       // Check if vehicle already exists
       const existingVehicles = await storage.getVehiclesByCustomer(customer.id);
-      let vehicle = existingVehicles.find((v: any) => 
+      const existingVehicle = existingVehicles.find((v) => 
         v.plate && vehicleData.plate && v.plate.toLowerCase() === vehicleData.plate.toLowerCase()
       );
 
-      if (!vehicle) {
+      let vehicle;
+      if (existingVehicle) {
+        vehicle = existingVehicle;
+      } else {
         vehicle = await storage.createVehicle({
           customerId: customer.id,
           brand: vehicleData.brand,
