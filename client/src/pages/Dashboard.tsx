@@ -79,15 +79,15 @@ export default function Dashboard() {
       animate="show"
       className="space-y-8"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Bom dia! 👋</h1>
-          <p className="text-gray-400">Aqui está o resumo da sua operação hoje.</p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">Bom dia! 👋</h1>
+          <p className="text-sm md:text-base text-gray-400">Aqui está o resumo da sua operação hoje.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full md:w-auto">
           <Button 
             variant="outline" 
-            className="glass-card border-white/10 hover:bg-white/10 text-white"
+            className="glass-card border-white/10 hover:bg-white/10 text-white w-full sm:w-auto"
             onClick={() => navigate("/finance")}
             data-testid="button-history"
           >
@@ -95,7 +95,7 @@ export default function Dashboard() {
             Histórico
           </Button>
           <Button 
-            className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-none"
+            className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-none w-full sm:w-auto"
             onClick={() => navigate("/schedule")}
             data-testid="button-new-appointment"
           >
