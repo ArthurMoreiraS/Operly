@@ -7,7 +7,7 @@ import { z } from "zod";
 export const businesses = pgTable("businesses", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  slug: text("slug").notNull().unique(), // URL-friendly identifier (e.g., rafael-lavagens)
+  slug: text("slug").notNull(), // URL-friendly identifier (e.g., rafael-lavagens)
   phone: text("phone"),
   email: text("email"),
   address: text("address"),
@@ -23,7 +23,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   businessId: integer("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  email: text("email").notNull().unique(),
+  email: text("email").notNull(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("user"), // admin (platform admin), user (regular SaaS user)
   businessRole: text("business_role").notNull().default("owner"), // owner (full access), employee (limited access)
