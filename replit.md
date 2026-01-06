@@ -6,6 +6,12 @@ Operly is a minimalist, glassy-design SaaS CRM built specifically for car wash b
 
 The platform provides a 360° business view with color-coded scheduling, automated WhatsApp reminders, customer/vehicle management with QR codes, service catalogs with dynamic pricing, financial reporting with service orders, and a customizable public booking page.
 
+### Team Management
+- Owners can manage team members via Settings > Equipe tab
+- Two business roles: owner (full access) and employee (limited access)
+- Employees cannot access Finanças or Configurações modules
+- API endpoints: GET/POST/PATCH/DELETE /api/team (owner only)
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

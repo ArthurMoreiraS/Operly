@@ -778,6 +778,125 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== TEAM ROUTES (Owner only) ====================
+  
+  // Owner-only middleware
+  function ownerOnly(req: Request, res: Response, next: NextFunction) {
+    if (req.user?.businessRole !== 'owner') {
+      return res.status(403).json({ error: "Acesso negado. Apenas proprietários." });
+    }
+    next();
+  }
+
+  // Get team members
+  app.get("/api/team", authMiddleware, ownerOnly, async (req, res) => {
+    try {
+      const members = await storage.getUsersByBusiness(req.business!.id);
+      // Don't return password hash
+      const safeMembers = members.map(m => ({
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        businessRole: m.businessRole,
+        avatarUrl: m.avatarUrl,
+        createdAt: m.createdAt,
+      }));
+      res.json(safeMembers);
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao buscar equipe" });
+    }
+  });
+
+  // Add team member
+  app.post("/api/team", authMiddleware, ownerOnly, async (req, res) => {
+    try {
+      const { name, email, password, businessRole } = req.body;
+      
+      if (!name || !email || !password) {
+        return res.status(400).json({ error: "Nome, email e senha são obrigatórios" });
+      }
+
+      // Check if email is already taken
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Este email já está cadastrado" });
+      }
+
+      const passwordHash = hashPassword(password);
+      const user = await storage.createUser({
+        businessId: req.business!.id,
+        name,
+        email,
+        passwordHash,
+        role: 'user',
+        businessRole: businessRole || 'employee',
+      });
+
+      res.status(201).json({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        businessRole: user.businessRole,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao adicionar membro" });
+    }
+  });
+
+  // Update team member
+  app.patch("/api/team/:id", authMiddleware, ownerOnly, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const member = await storage.getUser(id);
+      
+      if (!member || member.businessId !== req.business!.id) {
+        return res.status(404).json({ error: "Membro não encontrado" });
+      }
+
+      // Can't demote yourself
+      if (member.id === req.user!.id && req.body.businessRole === 'employee') {
+        return res.status(400).json({ error: "Você não pode remover sua própria permissão de proprietário" });
+      }
+
+      const updates: any = {};
+      if (req.body.name) updates.name = req.body.name;
+      if (req.body.businessRole) updates.businessRole = req.body.businessRole;
+      if (req.body.password) updates.passwordHash = hashPassword(req.body.password);
+
+      const updated = await storage.updateUser(id, updates);
+      res.json({
+        id: updated!.id,
+        name: updated!.name,
+        email: updated!.email,
+        businessRole: updated!.businessRole,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao atualizar membro" });
+    }
+  });
+
+  // Delete team member
+  app.delete("/api/team/:id", authMiddleware, ownerOnly, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const member = await storage.getUser(id);
+      
+      if (!member || member.businessId !== req.business!.id) {
+        return res.status(404).json({ error: "Membro não encontrado" });
+      }
+
+      // Can't delete yourself
+      if (member.id === req.user!.id) {
+        return res.status(400).json({ error: "Você não pode excluir sua própria conta" });
+      }
+
+      await storage.deleteUser(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Erro ao remover membro" });
+    }
+  });
+
   // ==================== ADMIN ROUTES ====================
   
   // Admin role check middleware

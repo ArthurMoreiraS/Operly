@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Store, User, Bell, Loader2, Copy, ExternalLink, Save, Phone, Mail, MapPin, Lock, Camera } from "lucide-react";
+import { Store, User, Bell, Loader2, Copy, ExternalLink, Save, Phone, Mail, MapPin, Lock, Camera, Users, UserPlus, Trash2, Crown, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -42,6 +42,13 @@ export default function Settings() {
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
+  });
+
+  const [newMemberForm, setNewMemberForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    businessRole: "employee",
   });
 
   useEffect(() => {
@@ -214,6 +221,74 @@ export default function Settings() {
     window.open(url, '_blank');
   };
 
+  // Team management
+  const { data: teamMembers = [], isLoading: teamLoading } = useQuery<any[]>({
+    queryKey: ["/api/team"],
+    queryFn: async () => {
+      const response = await fetch("/api/team", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch team");
+      return response.json();
+    },
+    enabled: user?.businessRole === 'owner',
+  });
+
+  const addMemberMutation = useMutation({
+    mutationFn: async (data: { name: string; email: string; password: string; businessRole: string }) => {
+      const response = await fetch("/api/team", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao adicionar membro");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/team"] });
+      setNewMemberForm({ name: "", email: "", password: "", businessRole: "employee" });
+      toast.success("Membro adicionado com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteMemberMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/team/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao remover membro");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/team"] });
+      toast.success("Membro removido com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleAddMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemberForm.name || !newMemberForm.email || !newMemberForm.password) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    if (newMemberForm.password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+    addMemberMutation.mutate(newMemberForm);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -241,6 +316,11 @@ export default function Settings() {
           <TabsTrigger value="account" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-400 rounded-lg px-3 md:px-4 py-2 flex gap-2 whitespace-nowrap text-sm">
             <User className="w-4 h-4" /> <span className="hidden sm:inline">Conta</span>
           </TabsTrigger>
+          {user?.businessRole === 'owner' && (
+            <TabsTrigger value="team" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-400 rounded-lg px-3 md:px-4 py-2 flex gap-2 whitespace-nowrap text-sm" data-testid="tab-team">
+              <Users className="w-4 h-4" /> <span className="hidden sm:inline">Equipe</span>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="notifications" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-400 rounded-lg px-3 md:px-4 py-2 flex gap-2 whitespace-nowrap text-sm">
             <Bell className="w-4 h-4" /> <span className="hidden sm:inline">Notificações</span>
           </TabsTrigger>
@@ -481,6 +561,158 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {user?.businessRole === 'owner' && (
+          <TabsContent value="team" className="space-y-6">
+            <Card className="glass-card border-white/5">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <UserPlus className="w-5 h-5" />
+                  Adicionar Membro
+                </CardTitle>
+                <CardDescription className="text-gray-400">Convide funcionários para acessar o sistema.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddMember} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">Nome *</Label>
+                      <Input 
+                        value={newMemberForm.name}
+                        onChange={(e) => setNewMemberForm({...newMemberForm, name: e.target.value})}
+                        placeholder="Nome do funcionário"
+                        className="bg-white/5 border-white/10 text-white"
+                        data-testid="input-member-name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">Email *</Label>
+                      <Input 
+                        type="email"
+                        value={newMemberForm.email}
+                        onChange={(e) => setNewMemberForm({...newMemberForm, email: e.target.value})}
+                        placeholder="email@exemplo.com"
+                        className="bg-white/5 border-white/10 text-white"
+                        data-testid="input-member-email"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">Senha *</Label>
+                      <Input 
+                        type="password"
+                        value={newMemberForm.password}
+                        onChange={(e) => setNewMemberForm({...newMemberForm, password: e.target.value})}
+                        placeholder="••••••••"
+                        className="bg-white/5 border-white/10 text-white"
+                        data-testid="input-member-password"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-300">Função</Label>
+                      <select
+                        value={newMemberForm.businessRole}
+                        onChange={(e) => setNewMemberForm({...newMemberForm, businessRole: e.target.value})}
+                        className="w-full h-9 px-3 rounded-md bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                        data-testid="select-member-role"
+                      >
+                        <option value="employee" className="bg-[#222a34]">Funcionário</option>
+                        <option value="owner" className="bg-[#222a34]">Proprietário</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <p><Crown className="w-3 h-3 inline mr-1" />Proprietários têm acesso total, incluindo Finanças e Configurações.</p>
+                    <p><Shield className="w-3 h-3 inline mr-1" />Funcionários podem gerenciar agendamentos, clientes e serviços.</p>
+                  </div>
+                  <Button 
+                    type="submit"
+                    className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto"
+                    disabled={addMemberMutation.isPending}
+                    data-testid="button-add-member"
+                  >
+                    {addMemberMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <UserPlus className="w-4 h-4 mr-2" />
+                    )}
+                    Adicionar Membro
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card border-white/5">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Membros da Equipe
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  {teamMembers.length} membro{teamMembers.length !== 1 ? 's' : ''} cadastrado{teamMembers.length !== 1 ? 's' : ''}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {teamLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                  </div>
+                ) : teamMembers.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p>Nenhum membro cadastrado.</p>
+                    <p className="text-sm mt-2">Adicione funcionários acima para começar.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {teamMembers.map((member) => (
+                      <div 
+                        key={member.id} 
+                        className="flex items-center justify-between p-4 bg-white/5 rounded-xl"
+                        data-testid={`team-member-${member.id}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10 border-2 border-white/10">
+                            <AvatarImage src={member.avatarUrl} />
+                            <AvatarFallback className="bg-primary/20 text-primary">
+                              {member.name?.charAt(0)?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-white">{member.name}</span>
+                              {member.businessRole === 'owner' ? (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-400 flex items-center gap-1">
+                                  <Crown className="w-3 h-3" /> Proprietário
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 flex items-center gap-1">
+                                  <Shield className="w-3 h-3" /> Funcionário
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-sm text-gray-400">{member.email}</span>
+                          </div>
+                        </div>
+                        {member.id !== user?.id && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            onClick={() => deleteMemberMutation.mutate(member.id)}
+                            disabled={deleteMemberMutation.isPending}
+                            data-testid={`button-delete-member-${member.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="notifications" className="space-y-6">
           <Card className="glass-card border-white/5">
