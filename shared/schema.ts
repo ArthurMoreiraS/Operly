@@ -25,7 +25,8 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role").notNull().default("user"), // admin, user
+  role: text("role").notNull().default("user"), // admin (platform admin), user (regular SaaS user)
+  businessRole: text("business_role").notNull().default("owner"), // owner (full access), employee (limited access)
   avatarUrl: text("avatar_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

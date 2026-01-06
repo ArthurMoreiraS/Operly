@@ -74,6 +74,7 @@ export interface IStorage {
   // Service Order methods (business-scoped)
   getServiceOrders(businessId: number): Promise<any[]>;
   getServiceOrder(id: number): Promise<ServiceOrder | undefined>;
+  getServiceOrderByAppointmentId(appointmentId: number): Promise<ServiceOrder | undefined>;
   createServiceOrder(order: InsertServiceOrder): Promise<ServiceOrder>;
   updateServiceOrder(id: number, order: Partial<InsertServiceOrder>): Promise<ServiceOrder | undefined>;
   
@@ -414,6 +415,11 @@ export class DrizzleStorage implements IStorage {
 
   async getServiceOrder(id: number): Promise<ServiceOrder | undefined> {
     const result = await this.db.select().from(serviceOrders).where(eq(serviceOrders.id, id));
+    return result[0];
+  }
+
+  async getServiceOrderByAppointmentId(appointmentId: number): Promise<ServiceOrder | undefined> {
+    const result = await this.db.select().from(serviceOrders).where(eq(serviceOrders.appointmentId, appointmentId));
     return result[0];
   }
 

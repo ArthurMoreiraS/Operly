@@ -121,7 +121,7 @@ export async function registerRoutes(
       });
 
       res.json({ 
-        user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl },
+        user: { id: user.id, name: user.name, email: user.email, role: user.role, businessRole: user.businessRole, avatarUrl: user.avatarUrl },
         business: business
       });
     } catch (error) {
@@ -154,7 +154,7 @@ export async function registerRoutes(
       if (!updatedUser) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-      res.json({ id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role, avatarUrl: updatedUser.avatarUrl });
+      res.json({ id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role, businessRole: updatedUser.businessRole, avatarUrl: updatedUser.avatarUrl });
     } catch (error) {
       res.status(500).json({ error: "Erro ao atualizar perfil" });
     }
@@ -209,7 +209,7 @@ export async function registerRoutes(
     const business = await storage.getBusiness(user.businessId);
 
     res.json({ 
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, businessRole: user.businessRole, avatarUrl: user.avatarUrl },
       business: business
     });
   });
@@ -238,7 +238,7 @@ export async function registerRoutes(
       if (!updatedUser) {
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-      res.json({ id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role, avatarUrl: updatedUser.avatarUrl });
+      res.json({ id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role, businessRole: updatedUser.businessRole, avatarUrl: updatedUser.avatarUrl });
     } catch (error) {
       res.status(500).json({ error: "Erro ao atualizar foto" });
     }
@@ -634,6 +634,29 @@ export async function registerRoutes(
       }
       const data = insertAppointmentSchema.partial().parse(req.body);
       const appointment = await storage.updateAppointment(id, data);
+      
+      // Auto-create service order when status changes to "completed"
+      if (data.status === "completed" && existing.status !== "completed") {
+        // Check if service order already exists for this appointment
+        const existingOrder = await storage.getServiceOrderByAppointmentId(id);
+        if (!existingOrder) {
+          // Get service price
+          const service = await storage.getService(existing.serviceId);
+          if (service) {
+            await storage.createServiceOrder({
+              businessId: existing.businessId,
+              appointmentId: id,
+              customerId: existing.customerId,
+              vehicleId: existing.vehicleId,
+              serviceId: existing.serviceId,
+              amount: service.price.toString(),
+              paymentStatus: "paid",
+              paymentMethod: null,
+            });
+          }
+        }
+      }
+      
       res.json(appointment);
     } catch (error) {
       if (error instanceof z.ZodError) {
