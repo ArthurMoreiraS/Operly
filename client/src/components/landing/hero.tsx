@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import dashboardImg from "@assets/image_1766123624933.png";
+import dashboardImg from "@assets/image_1767739544406.png";
 
 export function Hero() {
   const scrollToForm = () => {
