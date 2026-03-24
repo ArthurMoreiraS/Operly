@@ -91,7 +91,10 @@ export class DrizzleStorage implements IStorage {
   private db;
 
   constructor(connectionString: string) {
-    const pool = new pg.Pool({ connectionString });
+    const pool = new pg.Pool({ 
+      connectionString,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
     this.db = drizzle(pool);
   }
 
