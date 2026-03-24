@@ -2,6 +2,7 @@
 
 ![Status do Projeto](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow)
 ![Modelo](https://img.shields.io/badge/Modelo-SaaS-blue)
+[![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/operly)
 
 ---
 
