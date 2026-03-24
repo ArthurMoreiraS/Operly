@@ -85,12 +85,11 @@ export async function registerRoutes(
   // Health check for deployment (must be first, before any middleware)
   app.get("/api/health", async (_req, res) => {
     try {
-      // Test database connection
-      const testQuery = await storage.getBusinesses();
+      // Test database connection with a simple query
+      const testBusiness = await storage.getBusiness(1);
       res.status(200).json({ 
         status: "ok", 
         database: "connected",
-        businessCount: testQuery.length,
         env: {
           hasDbUrl: !!process.env.DATABASE_URL,
           nodeEnv: process.env.NODE_ENV
