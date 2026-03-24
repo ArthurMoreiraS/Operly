@@ -1,10 +1,21 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
 const app = express();
+
+// CORS configuration for Vercel frontend
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || "http://localhost:5000",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 app.use(cookieParser());
 const httpServer = createServer(app);
 
