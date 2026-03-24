@@ -83,8 +83,30 @@ export async function registerRoutes(
 ): Promise<Server> {
   
   // Health check for deployment (must be first, before any middleware)
-  app.get("/api/health", (_req, res) => {
-    res.status(200).json({ status: "ok" });
+  app.get("/api/health", async (_req, res) => {
+    try {
+      // Test database connection
+      const testQuery = await storage.getBusinesses();
+      res.status(200).json({ 
+        status: "ok", 
+        database: "connected",
+        businessCount: testQuery.length,
+        env: {
+          hasDbUrl: !!process.env.DATABASE_URL,
+          nodeEnv: process.env.NODE_ENV
+        }
+      });
+    } catch (error: any) {
+      res.status(200).json({ 
+        status: "ok", 
+        database: "error",
+        error: error.message,
+        env: {
+          hasDbUrl: !!process.env.DATABASE_URL,
+          nodeEnv: process.env.NODE_ENV
+        }
+      });
+    }
   });
   
   // ==================== AUTH ROUTES ====================
