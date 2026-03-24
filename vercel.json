@@ -3,15 +3,11 @@
   "buildCommand": "pnpm run build:client",
   "outputDirectory": "dist/public",
   "installCommand": "pnpm install",
-  "framework": null,
-  "routes": [
+  "framework": "vite",
+  "rewrites": [
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!assets/).*)",
+      "destination": "/index.html"
     }
   ]
 }
