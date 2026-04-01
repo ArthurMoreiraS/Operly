@@ -54,7 +54,7 @@ function Footer() {
         </div>
         
         <p className="text-sm text-muted-foreground">
-          © 2024 Operly. Todos os direitos reservados.
+          © 2026 Operly. Todos os direitos reservados.
         </p>
 
         <div className="flex gap-6 text-sm text-muted-foreground">
