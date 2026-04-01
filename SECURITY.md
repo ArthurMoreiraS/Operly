@@ -17,7 +17,7 @@ We prioritize:
 DO NOT open public issues for security vulnerabilities.
 
 Report privately:
-- Email: security@yourdomain.com (replace this)
+- Email: felipekislyy@gmail.com
 - GitHub Security Advisory
 
 Include:
