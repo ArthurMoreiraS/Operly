@@ -1,21 +1,194 @@
-# Security Policy
+# 🔐 SECURITY.md (Hardened Version)
 
-## Supported Versions
+## 📌 Security Policy
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Operly is designed with a security-first mindset, especially due to its multi-tenant architecture and handling of business-critical data.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+We prioritize:
+- Tenant isolation
+- Secure authentication
+- Data integrity
+- Protection against common web vulnerabilities
 
-## Reporting a Vulnerability
+---
 
-Use this section to tell people how to report a vulnerability.
+## 🚨 Reporting a Vulnerability
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+DO NOT open public issues for security vulnerabilities.
+
+Report privately:
+- Email: security@yourdomain.com (replace this)
+- GitHub Security Advisory
+
+Include:
+- Description
+- Steps to reproduce
+- Impact
+- Proof-of-concept
+
+Response SLA:
+- 24–48h acknowledgment
+- Fix based on severity
+- Coordinated disclosure
+
+---
+
+## 🛡️ Supported Versions
+
+| Version | Supported |
+|--------|----------|
+| main | ✅ |
+| develop | ✅ |
+| older | ❌ |
+
+---
+
+## 🏢 Multi-Tenant Isolation (CRITICAL)
+
+- Every query MUST include businessId
+- NEVER trust client-provided businessId
+- Always derive businessId from session
+
+Correct:
+const businessId = req.user.businessId;
+
+Wrong:
+const { businessId } = req.body;
+
+---
+
+## 🔐 Authentication & Session Security
+
+- Passwords hashed with bcrypt (salt ≥ 10)
+- Sessions stored in PostgreSQL
+- Strong SESSION_SECRET (≥ 32 chars)
+
+Cookie config:
+- httpOnly: true
+- secure: production only
+- sameSite: lax
+
+---
+
+## 🚦 Rate Limiting
+
+Use express-rate-limit on:
+- /login
+- /register
+- /api/*
+
+---
+
+## 🧱 Security Headers
+
+Use helmet for:
+- CSP
+- XSS protection
+- secure headers
+
+---
+
+## 🌐 CORS
+
+Restrict origins:
+- Allow only your frontend domain
+
+---
+
+## 🧪 Input Validation
+
+- Validate ALL inputs with Zod
+- Never trust frontend data
+
+---
+
+## 💉 Injection Protection
+
+- No raw SQL
+- Use Drizzle ORM only
+
+---
+
+## 🧠 Error Handling
+
+- Do not expose stack traces
+- Return generic errors to client
+
+---
+
+## 🔑 Secrets
+
+- Never commit .env
+- Use environment variables
+- Rotate secrets periodically
+
+Required:
+DATABASE_URL
+SESSION_SECRET
+
+---
+
+## 📦 Dependency Security
+
+- Run: pnpm audit
+- Keep dependencies updated
+
+---
+
+## 🔍 Logging
+
+Log:
+- login attempts
+- suspicious activity
+
+Never log:
+- passwords
+- tokens
+
+---
+
+## 🚀 Deployment Security
+
+Mandatory:
+- HTTPS
+- secure cookies
+- production mode
+
+Recommended:
+- Reverse proxy (NGINX / Cloudflare)
+- WAF
+
+---
+
+## 🧪 Checklist
+
+- pnpm check passes
+- pnpm build passes
+- auth tested
+- tenant isolation verified
+- rate limiting active
+- CORS restricted
+- helmet enabled
+
+---
+
+## 🚨 High-Risk Areas
+
+- Auth routes
+- Multi-tenant queries
+- Payments (future)
+- Public endpoints
+
+---
+
+## 📢 Disclosure Policy
+
+- Fix first, disclose later
+- Credit researchers if desired
+
+---
+
+## 🙏 Acknowledgments
+
+We appreciate responsible disclosure and security contributions.
+"""
