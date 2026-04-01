@@ -1,101 +1,157 @@
-# Operly - CRM para Estética Automotiva (SaaS)
+# Operly
 
-![Status do Projeto](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow)
-![Modelo](https://img.shields.io/badge/Modelo-SaaS-blue)
+**CRM SaaS para Lava-Rápidos e Estética Automotiva**
 
----
+[![Status](https://img.shields.io/badge/Status-Beta-blue)](https://github.com/ArthurMoreiraS/Operly)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-## 🛠️ Tecnologias Utilizadas
-
-* **Frontend:** [React](https://reactjs.org/) com [TypeScript](https://www.typescriptlang.org/)
-* **Backend:** [Node.js](https://nodejs.org/) com [Express](https://expressjs.com/)
-* **Linguagem:** TypeScript (Fullstack)
-* **Estilização:** [Tailwind CSS](https://tailwindcss.com/)
-* **Banco de Dados:** [PostgreSQL](https://www.postgresql.org/) com Prisma ORM
-* **Versionamento:** Git & GitHub
+Operly é uma plataforma completa para gestão de lava-rápidos e centros de estética automotiva. Organize sua agenda, gerencie clientes e veículos, controle finanças e acompanhe o desempenho do seu negócio em tempo real.
 
 ---
 
-## 🚀 Como Rodar o Projeto Localmente
+## ✨ Funcionalidades
+
+- 📅 **Agendamentos** — Calendário visual com status por cores
+- 👥 **Clientes & Veículos** — Cadastro completo com histórico
+- 🛠️ **Serviços** — Catálogo com preços e duração
+- 💰 **Financeiro** — Ordens de serviço e controle de pagamentos
+- 📊 **Dashboard** — Métricas e relatórios em tempo real
+- 👨‍💼 **Equipe** — Gestão de funcionários com permissões
+- 🌐 **Landing Page** — Página pública com captação de leads
+
+---
+
+## 🛠️ Tech Stack
+
+| Camada | Tecnologia |
+|--------|------------|
+| Backend | Express + TypeScript |
+| Frontend | React 19 + Vite + TailwindCSS v4 |
+| Banco de Dados | PostgreSQL + Drizzle ORM |
+| UI | Radix UI + shadcn/ui |
+| Auth | Passport.js + bcryptjs |
+
+---
+
+## 🚀 Quick Start
 
 ### Pré-requisitos
-* [Node.js](https://nodejs.org/) (v18 ou superior)
-* [NPM](https://www.npmjs.com/) ou [Yarn](https://yarnpkg.com/)
-* Banco de Dados **PostgreSQL** ativo
 
-### Passo a Passo
+- Node.js 20+
+- pnpm
+- PostgreSQL
 
-1.  **Clone o repositório:**
-    ```bash
-    git clone [https://github.com/ArthurMoreiraS/Operly.git](https://github.com/ArthurMoreiraS/Operly.git)
-    cd Operly
-    ```
+### Instalação
 
-2.  **Configuração do Backend:**
-    ```bash
-    cd backend
-    npm install
-    # Configure suas variáveis de ambiente no arquivo .env (DATABASE_URL)
-    npx prisma generate
-    npm run dev
-    ```
+```bash
+git clone https://github.com/ArthurMoreiraS/Operly.git
+cd Operly
+pnpm install
+```
 
-3.  **Configuração do Frontend:**
-    Em um novo terminal na raiz do projeto:
-    ```bash
-    cd frontend
-    npm install
-    npm run dev
-    ```
+### Configuração
+
+Crie um arquivo `.env` na raiz:
+
+```env
+DATABASE_URL=postgresql://user:pass@localhost:5432/operly
+SESSION_SECRET=sua-chave-secreta-com-32-caracteres
+```
+
+### Executar
+
+```bash
+# Aplicar schema no banco
+pnpm db:push
+
+# Desenvolvimento
+pnpm dev          # Backend
+pnpm dev:client   # Frontend (outro terminal)
+
+# Produção
+pnpm build
+pnpm start
+```
+
+---
+
+## 📜 Scripts
+
+| Comando | Descrição |
+|---------|-----------|
+| `pnpm dev` | Backend em modo desenvolvimento |
+| `pnpm dev:client` | Frontend com hot reload |
+| `pnpm build` | Build de produção |
+| `pnpm start` | Executa build de produção |
+| `pnpm check` | Type check TypeScript |
+| `pnpm db:push` | Sincroniza schema com banco |
+| `pnpm test` | Executa testes (Jest) |
+| `pnpm test:coverage` | Testes com relatório de cobertura |
 
 ---
 
-## 📄 Descrição do Projeto (Documentação Original)
+## 🧪 Testes
 
-Ao longo deste semestre, será desenvolvido um CRM (Customer Relationship Management) no modelo SaaS (Software as a Service) voltado para empresas do segmento de estética automotiva. A plataforma terá como objetivo auxiliar na gestão de clientes, organização de agendamentos, controle de serviços e melhoria no relacionamento entre empresas e seus consumidores.
-
-O projeto terá como base um MVP (Minimum Viable Product) já desenvolvido, que será evoluído durante o semestre. As principais atividades previstas incluem a análise do sistema atual, melhorias na interface do usuário (UI) e implementação de novas funcionalidades que agreguem valor à gestão do negócio.
-
-Entre as melhorias planejadas estão:
-* Ajustes e melhorias na interface para proporcionar melhor experiência de uso;
-* Refatoração e organização do código existente;
-* Implementação de novas funcionalidades voltadas à gestão de clientes e serviços;
-* Desenvolvimento e integração de uma API para automatização de pagamentos via Pix, facilitando a confirmação de agendamentos e reduzindo processos manuais.
-
-### Arquitetura do Sistema
-Durante o desenvolvimento será definida uma arquitetura de software organizada e escalável, garantindo melhor manutenção, segurança e desempenho do sistema.
-A arquitetura proposta inclui:
-* Separação entre frontend e backend, utilizando comunicação por meio de APIs;
-* Estruturação do sistema em camadas, separando apresentação, regras de negócio e persistência de dados;
-* Implementação de boas práticas de desenvolvimento, incluindo tratamento de erros, validações e padronização de código;
-* Modelagem eficiente do banco de dados para garantir integridade e desempenho;
-* Preparação para hospedagem em ambiente de nuvem, permitindo maior disponibilidade e escalabilidade do sistema.
-
-Essa organização permitirá que o sistema evolua de forma estruturada, facilitando futuras melhorias e integrações.
-
-### Escalabilidade e Potencial Comercial
-Além de seu objetivo acadêmico, o sistema será desenvolvido com foco em escalabilidade e potencial de comercialização. Por se tratar de um CRM em modelo SaaS, a plataforma poderá atender múltiplas empresas simultaneamente.
-O sistema será planejado para:
-* Permitir o cadastro e gerenciamento de diferentes empresas na mesma plataforma;
-* Oferecer gestão centralizada de clientes, serviços e agendamentos;
-* Possibilitar expansão para novos mercados e segmentos de serviços;
-* Integrar novas ferramentas e serviços externos conforme a evolução do produto.
-
-Dessa forma, o projeto poderá futuramente ser comercializado como uma solução tecnológica para empresas que buscam digitalizar e melhorar seus processos de atendimento e gestão de clientes.
-
-### Administração do Projeto
-A gestão do projeto será realizada utilizando princípios de metodologias ágeis, organizando o desenvolvimento em etapas iterativas ao longo do semestre.
-Entre as práticas adotadas estão:
-* Planejamento e organização das funcionalidades em backlog;
-* Priorização de tarefas de acordo com a importância para o sistema;
-* Controle de versionamento do código durante o desenvolvimento;
-* Realização de testes e validações das funcionalidades implementadas;
-* Produção de documentação técnica e acompanhamento da evolução do projeto.
-
-Essa abordagem permitirá maior controle sobre o desenvolvimento e facilitará a entrega de um sistema funcional e bem estruturado.
-
-### Objetivo Final
-Ao final do semestre, espera-se entregar um CRM funcional para empresas de estética automotiva, com interface aprimorada, sistema de pagamento integrado via Pix e arquitetura preparada para crescimento e evolução futura, possibilitando que a solução possa ser utilizada e potencialmente comercializada no mercado.
+```bash
+pnpm test              # Todos os testes
+pnpm test auth         # Testes específicos
+pnpm test:coverage     # Com cobertura
+```
 
 ---
-> *Este projeto faz parte do cronograma acadêmico de desenvolvimento de software do semestre atual.*
+
+## 🏗️ Arquitetura
+
+```
+├── client/          # React + Vite
+├── server/          # Express API
+├── shared/          # Schema + types compartilhados
+└── script/          # Scripts de build
+```
+
+---
+
+## 🔐 Segurança
+
+- Multi-tenant com isolamento por `businessId`
+- Sessões em PostgreSQL
+- Senhas com bcrypt
+- Validação com Zod
+
+Veja [SECURITY.md](SECURITY.md) para detalhes.
+
+---
+
+## 🚀 CI/CD
+
+| Pipeline | Trigger | Ações |
+|----------|---------|-------|
+| **CI** | Push/PR | Type check → Testes → Build |
+| **CD** | Push main | Testes → Deploy Render |
+
+**Secret necessário:** `RENDER_DEPLOY_HOOK`
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] Integração WhatsApp (notificações)
+- [ ] Pagamento PIX automático
+- [ ] App mobile
+- [ ] API pública
+
+---
+
+## 🤝 Contribuindo
+
+1. Fork o repositório
+2. Crie uma branch: `git checkout -b feat/nova-funcionalidade`
+3. Commit: `git commit -m 'feat: adiciona funcionalidade'`
+4. Push: `git push origin feat/nova-funcionalidade`
+5. Abra um Pull Request
+
+---
+
+## 📄 Licença
+
+MIT © [Arthur Moreira](https://github.com/ArthurMoreiraS)

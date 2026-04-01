@@ -191,4 +191,3 @@ Recommended:
 ## 🙏 Acknowledgments
 
 We appreciate responsible disclosure and security contributions.
-"""
