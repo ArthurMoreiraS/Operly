@@ -12,7 +12,7 @@ env:
 
 jobs:
   ci:
-    name: Build & Validate
+    name: Build & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -35,6 +35,9 @@ jobs:
 
       - name: 🔎 Type Check
         run: pnpm check
+
+      - name: 🧪 Run Tests
+        run: pnpm test
 
       - name: 🏗️ Build
         env:

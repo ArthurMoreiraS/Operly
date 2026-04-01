@@ -64,6 +64,39 @@
 | `pnpm start` | Run production build |
 | `pnpm check` | TypeScript type checking |
 | `pnpm db:push` | Push schema changes to database |
+| `pnpm test` | Run Jest tests |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with coverage report |
+
+---
+
+## 🧪 Testing
+
+### Structure
+```
+server/__tests__/
+├── setup.ts              # Jest setup file
+├── auth.test.ts          # Authentication tests
+├── customers.test.ts     # Customer CRUD tests
+├── vehicles.test.ts      # Vehicle CRUD tests
+├── services.test.ts      # Service catalog tests
+├── appointments.test.ts  # Appointment tests
+└── orders.test.ts        # Service orders tests
+```
+
+### Guidelines
+- Use **Jest** + **Supertest** for API testing
+- Each feature has its own test file
+- Mock database for unit tests
+- Test both success and error cases
+- Test multi-tenant isolation (businessId)
+
+### Running Tests
+```bash
+pnpm test              # Run all tests
+pnpm test auth         # Run specific test file
+pnpm test:coverage     # Generate coverage report
+```
 
 ---
 
@@ -125,16 +158,29 @@ pnpm dev:client
 
 ## ✅ CI/CD Pipeline
 
-GitHub Actions runs on push to `main`/`develop` and PRs to `main`:
+### CI (Continuous Integration)
+Runs on push to `main`/`develop` and PRs to `main`:
 
 1. **Install** - `pnpm install --frozen-lockfile`
 2. **Type Check** - `pnpm check`
-3. **Build** - `pnpm build`
+3. **Tests** - `pnpm test`
+4. **Build** - `pnpm build`
+
+### CD (Continuous Deployment)
+Runs on push to `main` after CI passes:
+
+1. **Test** - Runs full test suite
+2. **Deploy** - Triggers Render deploy (API + Frontend via Docker)
+
+### Required Secret (GitHub)
+```
+RENDER_DEPLOY_HOOK    # Render deploy webhook URL
+```
 
 **Before committing, ensure:**
 ```bash
-pnpm install
 pnpm check
+pnpm test
 pnpm build
 ```
 

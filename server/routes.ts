@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
 import { 
   insertCustomerSchema, 
@@ -16,6 +17,23 @@ import {
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+
+// Rate limiters
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: { error: "Muitas tentativas. Tente novamente em 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute
+  message: { error: "Limite de requisições excedido. Tente novamente." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Extend Express Request to include user and business
 declare global {
@@ -82,6 +100,9 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  // Apply general API rate limiting
+  app.use("/api", apiLimiter);
+  
   // Health check for deployment (must be first, before any middleware)
   app.get("/api/health", async (_req, res) => {
     try {
@@ -110,8 +131,8 @@ export async function registerRoutes(
   
   // ==================== AUTH ROUTES ====================
   
-  // Login
-  app.post("/api/auth/login", async (req, res) => {
+  // Login (rate limited: 5 attempts per 15 minutes)
+  app.post("/api/auth/login", authLimiter, async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
       
