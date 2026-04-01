@@ -60,7 +60,7 @@ function Footer() {
         <div className="flex gap-6 text-sm text-muted-foreground">
           <a href="#" className="hover:text-white transition-colors">Termos</a>
           <a href="#" className="hover:text-white transition-colors">Privacidade</a>
-          <a href="#" className="hover:text-white transition-colors">Instagram</a>
+          <a href="https://instagram.com/operlybr" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Instagram</a>
         </div>
       </div>
     </footer>
