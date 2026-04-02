@@ -642,6 +642,20 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/appointments/counts/:year/:month", authMiddleware, async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+        return res.status(400).json({ error: "Invalid year or month" });
+      }
+      const counts = await storage.getAppointmentCountsByMonth(req.business!.id, year, month);
+      res.json(counts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch appointment counts" });
+    }
+  });
+
   app.get("/api/appointments/:id", authMiddleware, async (req, res) => {
     try {
       const id = parseInt(req.params.id);

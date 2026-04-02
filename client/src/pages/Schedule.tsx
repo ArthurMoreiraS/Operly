@@ -21,7 +21,7 @@ import {
 import { Calendar as CalendarIcon, Clock, Plus, ChevronLeft, ChevronRight, Filter, Loader2, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, startOfWeek, endOfWeek, addDays, subDays, addWeeks, subWeeks } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, startOfWeek, endOfWeek, addDays, subDays, addWeeks, subWeeks, getYear, getMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
@@ -67,6 +67,17 @@ export default function Schedule() {
       const response = await fetch(`/api/appointments?date=${dateStr}`, { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch appointments");
       return response.json();
+    },
+  });
+
+  const { data: monthCounts } = useQuery({
+    queryKey: ["/api/appointments/counts", getYear(currentMonth), getMonth(currentMonth) + 1],
+    queryFn: async () => {
+      const year = getYear(currentMonth);
+      const month = getMonth(currentMonth) + 1;
+      const response = await fetch(`/api/appointments/counts/${year}/${month}`, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch appointment counts");
+      return response.json() as Promise<Record<string, number>>;
     },
   });
 
@@ -311,12 +322,14 @@ export default function Schedule() {
                 {daysInMonth.map((day) => {
                   const isSelected = isSameDay(day, selectedDate);
                   const isToday = isSameDay(day, new Date());
-                  const hasAppointments = hasAppointmentsOnDay(day);
+                  const dateKey = format(day, 'yyyy-MM-dd');
+                  const appointmentCount = monthCounts?.[dateKey] || 0;
+                  const hasAppointments = appointmentCount > 0;
                   return (
                     <button 
                       key={day.toISOString()}
                       onClick={() => handleDayClick(day)}
-                      className={`h-8 w-8 rounded-full flex flex-col items-center justify-center transition-all text-sm mx-auto relative
+                      className={`h-8 w-8 rounded-full flex items-center justify-center transition-all text-sm mx-auto relative
                         ${isSelected 
                           ? 'bg-primary text-white shadow-lg shadow-primary/20' 
                           : isToday 
@@ -327,7 +340,7 @@ export default function Schedule() {
                     >
                       {format(day, 'd')}
                       {hasAppointments && !isSelected && (
-                        <span className="absolute bottom-0.5 w-1 h-1 bg-primary rounded-full" />
+                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
                       )}
                     </button>
                   );

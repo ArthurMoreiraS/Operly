@@ -70,6 +70,7 @@ export interface IStorage {
   
   // Appointment methods (business-scoped)
   getAppointments(businessId: number, date?: Date, status?: string): Promise<any[]>;
+  getAppointmentCountsByMonth(businessId: number, year: number, month: number): Promise<Record<string, number>>;
   getAppointment(id: number): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined>;
@@ -358,6 +359,31 @@ export class DrizzleStorage implements IStorage {
       .leftJoin(services, eq(appointments.serviceId, services.id))
       .where(and(...conditions))
       .orderBy(appointments.scheduledAt);
+  }
+
+  async getAppointmentCountsByMonth(businessId: number, year: number, month: number): Promise<Record<string, number>> {
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+    
+    const result = await this.db
+      .select({
+        date: sql<string>`TO_CHAR(${appointments.scheduledAt}, 'YYYY-MM-DD')`,
+        count: sql<number>`COUNT(*)::int`,
+      })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.businessId, businessId),
+          gte(appointments.scheduledAt, startOfMonth),
+          lte(appointments.scheduledAt, endOfMonth)
+        )
+      )
+      .groupBy(sql`TO_CHAR(${appointments.scheduledAt}, 'YYYY-MM-DD')`);
+    
+    return result.reduce((acc, row) => {
+      acc[row.date] = row.count;
+      return acc;
+    }, {} as Record<string, number>);
   }
 
   async getAppointment(id: number): Promise<Appointment | undefined> {

@@ -116,7 +116,12 @@ export const serviceOrders = pgTable("service_orders", {
 export const insertBusinessSchema = createInsertSchema(businesses).omit({ id: true, createdAt: true });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertSessionSchema = createInsertSchema(sessions).omit({ createdAt: true });
-export const insertLeadSchema = createInsertSchema(leads).omit({ id: true, createdAt: true, status: true, notes: true });
+export const insertLeadSchema = createInsertSchema(leads).omit({ id: true, createdAt: true, status: true, notes: true }).extend({
+  name: z.string().min(2, "Nome muito curto").max(100, "Nome muito longo"),
+  whatsapp: z.string().min(10, "WhatsApp inválido").max(20, "WhatsApp inválido"),
+  email: z.string().email("Email inválido").max(255, "Email muito longo"),
+  teamSize: z.string().min(1, "Selecione o tamanho do negócio"),
+});
 export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true });
 export const insertVehicleSchema = createInsertSchema(vehicles).omit({ id: true });
 export const insertServiceSchema = createInsertSchema(services).omit({ id: true });
