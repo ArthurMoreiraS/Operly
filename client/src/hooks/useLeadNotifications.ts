@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { formatPhoneDisplay } from '@/lib/formatters';
 
 interface LeadNotification {
   type: 'new_lead';
@@ -54,7 +55,7 @@ export function useLeadNotifications() {
             
             // Show toast notification
             toast.success(`🎉 Novo Lead: ${notification.data.name}`, {
-              description: `${notification.data.email} • ${notification.data.whatsapp}`,
+              description: `${notification.data.email} • ${formatPhoneDisplay(notification.data.whatsapp)}`,
               duration: 8000,
               action: {
                 label: 'Ver leads',

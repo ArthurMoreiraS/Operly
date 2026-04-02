@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Loader2, ArrowRight } from "lucide-react";
 import { useState } from "react";
+import { formatWhatsApp } from "@/lib/formatters";
 
 const formSchema = z.object({
   name: z.string()
@@ -17,7 +18,7 @@ const formSchema = z.object({
     .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras"),
   whatsapp: z.string()
     .min(10, "WhatsApp inválido")
-    .max(15, "WhatsApp inválido")
+    .max(20, "WhatsApp inválido")
     .regex(/^[\d\s()+-]+$/, "WhatsApp deve conter apenas números"),
   email: z.string()
     .email("Email inválido")
@@ -154,7 +155,12 @@ export function LeadForm() {
                         <FormItem>
                           <FormLabel>WhatsApp</FormLabel>
                           <FormControl>
-                            <Input placeholder="(11) 99999-9999" {...field} className="bg-background/50 border-white/10 h-12 rounded-xl focus:ring-primary focus:border-primary" />
+                            <Input 
+                              placeholder="(11) 9 9999-9999" 
+                              {...field} 
+                              onChange={(e) => field.onChange(formatWhatsApp(e.target.value))}
+                              className="bg-background/50 border-white/10 h-12 rounded-xl focus:ring-primary focus:border-primary" 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
 import { toast } from "sonner";
+import { formatPhoneDisplay } from "@/lib/formatters";
 
 interface Lead {
   id: number;
@@ -171,7 +172,7 @@ export default function Leads() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-sm text-gray-300">
                             <Phone className="w-3 h-3" />
-                            {lead.whatsapp}
+                            {formatPhoneDisplay(lead.whatsapp)}
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-400">
                             <Mail className="w-3 h-3" />
