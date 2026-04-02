@@ -105,7 +105,50 @@ describe('Appointment Routes', () => {
         .set('Cookie', 'sessionId=session-123');
 
       expect(response.status).toBe(200);
-      expect(mockStorage.getAppointments).toHaveBeenCalledWith(1, expect.any(Date));
+      expect(mockStorage.getAppointments).toHaveBeenCalledWith(1, expect.any(Date), undefined);
+    });
+
+    it('should filter appointments by status', async () => {
+      mockAuthenticatedSession();
+      mockStorage.getAppointments.mockResolvedValueOnce([
+        { id: 1, status: 'pending', businessId: 1 },
+        { id: 2, status: 'pending', businessId: 1 },
+      ]);
+
+      const response = await request(app)
+        .get('/api/appointments?status=pending')
+        .set('Cookie', 'sessionId=session-123');
+
+      expect(response.status).toBe(200);
+      expect(mockStorage.getAppointments).toHaveBeenCalledWith(1, undefined, 'pending');
+      expect(response.body).toHaveLength(2);
+      expect(response.body.every((a: any) => a.status === 'pending')).toBe(true);
+    });
+
+    it('should filter appointments by date and status combined', async () => {
+      mockAuthenticatedSession();
+      mockStorage.getAppointments.mockResolvedValueOnce([
+        { id: 1, scheduledAt: new Date('2024-12-25'), status: 'pending', businessId: 1 },
+      ]);
+
+      const response = await request(app)
+        .get('/api/appointments?date=2024-12-25&status=pending')
+        .set('Cookie', 'sessionId=session-123');
+
+      expect(response.status).toBe(200);
+      expect(mockStorage.getAppointments).toHaveBeenCalledWith(1, expect.any(Date), 'pending');
+    });
+
+    it('should return empty array for status with no appointments', async () => {
+      mockAuthenticatedSession();
+      mockStorage.getAppointments.mockResolvedValueOnce([]);
+
+      const response = await request(app)
+        .get('/api/appointments?status=completed')
+        .set('Cookie', 'sessionId=session-123');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(0);
     });
   });
 
