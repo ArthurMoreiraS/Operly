@@ -197,7 +197,7 @@ export default function Leads() {
                               <XCircle className="w-4 h-4 mr-2" />
                               Marcar como Perdido
                             </DropdownMenuItem>
-                            <Link href={`/admin/onboard?leadId=${lead.id}&name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&phone=${encodeURIComponent(lead.whatsapp)}&business=${encodeURIComponent(lead.teamSize || '')}`}>
+                            <Link href={`/admin/onboard?leadId=${lead.id}&name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&phone=${encodeURIComponent(lead.whatsapp)}`}>
                               <DropdownMenuItem className="cursor-pointer text-primary">
                                 <UserPlus className="w-4 h-4 mr-2" />
                                 Converter em Cliente
