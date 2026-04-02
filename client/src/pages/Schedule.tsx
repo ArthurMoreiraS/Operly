@@ -21,7 +21,7 @@ import {
 import { Calendar as CalendarIcon, Clock, Plus, ChevronLeft, ChevronRight, Filter, Loader2, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, startOfWeek, endOfWeek, addDays, subDays, addWeeks, subWeeks } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
@@ -204,6 +204,10 @@ export default function Schedule() {
     ) || [];
   };
 
+  const hasAppointmentsOnDay = (day: Date) => {
+    return appointments?.some((a: any) => isSameDay(new Date(a.scheduledAt), day)) || false;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -307,11 +311,12 @@ export default function Schedule() {
                 {daysInMonth.map((day) => {
                   const isSelected = isSameDay(day, selectedDate);
                   const isToday = isSameDay(day, new Date());
+                  const hasAppointments = hasAppointmentsOnDay(day);
                   return (
                     <button 
                       key={day.toISOString()}
                       onClick={() => handleDayClick(day)}
-                      className={`h-8 w-8 rounded-full flex items-center justify-center transition-all text-sm mx-auto
+                      className={`h-8 w-8 rounded-full flex flex-col items-center justify-center transition-all text-sm mx-auto relative
                         ${isSelected 
                           ? 'bg-primary text-white shadow-lg shadow-primary/20' 
                           : isToday 
@@ -321,6 +326,9 @@ export default function Schedule() {
                       data-testid={`day-${format(day, 'yyyy-MM-dd')}`}
                     >
                       {format(day, 'd')}
+                      {hasAppointments && !isSelected && (
+                        <span className="absolute bottom-0.5 w-1 h-1 bg-primary rounded-full" />
+                      )}
                     </button>
                   );
                 })}
@@ -364,13 +372,39 @@ export default function Schedule() {
             <CardHeader className="border-b border-white/5 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white font-medium">
+                  <button
+                    onClick={() => {
+                      if (viewMode === 'day') {
+                        setSelectedDate(subDays(selectedDate, 1));
+                      } else {
+                        setSelectedDate(subWeeks(selectedDate, 1));
+                      }
+                    }}
+                    className="p-1 rounded-md hover:bg-white/10 transition-colors"
+                    data-testid="nav-prev"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-gray-400" />
+                  </button>
                   <CalendarIcon className="w-4 h-4 text-primary" />
-                  <span className="capitalize">
+                  <span className="capitalize min-w-[200px] text-center">
                     {viewMode === 'day' 
                       ? format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
                       : `${format(weekStart, "dd 'de' MMM", { locale: ptBR })} - ${format(addDays(weekStart, 6), "dd 'de' MMM", { locale: ptBR })}`
                     }
                   </span>
+                  <button
+                    onClick={() => {
+                      if (viewMode === 'day') {
+                        setSelectedDate(addDays(selectedDate, 1));
+                      } else {
+                        setSelectedDate(addWeeks(selectedDate, 1));
+                      }
+                    }}
+                    className="p-1 rounded-md hover:bg-white/10 transition-colors"
+                    data-testid="nav-next"
+                  >
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </button>
                 </div>
                 <div className="flex bg-white/5 rounded-lg p-1">
                   <button 
