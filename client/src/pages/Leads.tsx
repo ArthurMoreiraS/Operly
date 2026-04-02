@@ -1,16 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Phone, Mail, Building2, Calendar, CheckCircle, Clock, XCircle, MoreVertical, UserPlus } from "lucide-react";
+import { Phone, Mail, Building2, Calendar, CheckCircle, Clock, XCircle, MoreVertical, UserPlus, Archive, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
+import { toast } from "sonner";
 
 interface Lead {
   id: number;
@@ -52,8 +54,29 @@ export default function Leads() {
       if (!res.ok) throw new Error("Failed to update lead");
       return res.json();
     },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+      if (variables.status === "archived") {
+        toast.success("Lead arquivado com sucesso");
+      }
+    },
+  });
+
+  const deleteLeadMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/leads/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to delete lead");
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+      toast.success("Lead excluído com sucesso");
+    },
+    onError: () => {
+      toast.error("Erro ao excluir lead");
     },
   });
 
@@ -203,6 +226,25 @@ export default function Leads() {
                                 Converter em Cliente
                               </DropdownMenuItem>
                             </Link>
+                            <DropdownMenuSeparator className="bg-white/10" />
+                            <DropdownMenuItem
+                              onClick={() => updateStatusMutation.mutate({ id: lead.id, status: "archived" })}
+                              className="cursor-pointer text-gray-400"
+                            >
+                              <Archive className="w-4 h-4 mr-2" />
+                              Arquivar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (confirm("Tem certeza que deseja excluir este lead permanentemente?")) {
+                                  deleteLeadMutation.mutate(lead.id);
+                                }
+                              }}
+                              className="cursor-pointer text-red-500"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
