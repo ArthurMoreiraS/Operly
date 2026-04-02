@@ -21,7 +21,7 @@ import {
 import { Calendar as CalendarIcon, Clock, Plus, ChevronLeft, ChevronRight, Filter, Loader2, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
@@ -190,9 +190,19 @@ export default function Schedule() {
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const startDayOfWeek = getDay(monthStart);
 
+  // Week view helpers
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
   const filteredAppointments = filterStatus 
     ? appointments?.filter((a: any) => a.status === filterStatus) 
     : appointments;
+
+  const getAppointmentsForDay = (day: Date) => {
+    return filteredAppointments?.filter((a: any) => 
+      isSameDay(new Date(a.scheduledAt), day)
+    ) || [];
+  };
 
   if (isLoading) {
     return (
@@ -355,7 +365,12 @@ export default function Schedule() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white font-medium">
                   <CalendarIcon className="w-4 h-4 text-primary" />
-                  <span className="capitalize">{format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
+                  <span className="capitalize">
+                    {viewMode === 'day' 
+                      ? format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
+                      : `${format(weekStart, "dd 'de' MMM", { locale: ptBR })} - ${format(addDays(weekStart, 6), "dd 'de' MMM", { locale: ptBR })}`
+                    }
+                  </span>
                 </div>
                 <div className="flex bg-white/5 rounded-lg p-1">
                   <button 
@@ -376,13 +391,15 @@ export default function Schedule() {
               </div>
             </CardHeader>
             <CardContent className="p-0 relative overflow-y-auto max-h-[550px]">
-              <div className="absolute left-16 top-0 bottom-0 w-px bg-white/5 z-0" />
-              
-              <div className="divide-y divide-white/5">
-                {timeSlots.map((hour) => {
-                  const hourAppointments = filteredAppointments?.filter((a: any) => {
-                    const appointmentHour = new Date(a.scheduledAt).getHours();
-                    return appointmentHour === hour;
+              {viewMode === 'day' ? (
+                <>
+                  <div className="absolute left-16 top-0 bottom-0 w-px bg-white/5 z-0" />
+                  
+                  <div className="divide-y divide-white/5">
+                    {timeSlots.map((hour) => {
+                      const hourAppointments = filteredAppointments?.filter((a: any) => {
+                        const appointmentHour = new Date(a.scheduledAt).getHours();
+                        return appointmentHour === hour;
                   }) || [];
                   
                   return (
@@ -450,6 +467,82 @@ export default function Schedule() {
                   );
                 })}
               </div>
+                </>
+              ) : (
+                <div className="overflow-x-auto">
+                  <div className="min-w-[700px]">
+                    {/* Week header */}
+                    <div className="grid grid-cols-8 border-b border-white/5">
+                      <div className="w-16 p-2 text-xs text-gray-500 font-medium border-r border-white/5"></div>
+                      {weekDays.map((day) => (
+                        <div 
+                          key={day.toISOString()} 
+                          className={`p-2 text-center border-r border-white/5 last:border-r-0 ${
+                            isSameDay(day, new Date()) ? 'bg-primary/10' : ''
+                          }`}
+                        >
+                          <div className="text-xs text-gray-400 uppercase">
+                            {format(day, 'EEE', { locale: ptBR })}
+                          </div>
+                          <div className={`text-sm font-medium ${
+                            isSameDay(day, selectedDate) ? 'text-primary' : 'text-white'
+                          }`}>
+                            {format(day, 'd')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Time slots */}
+                    <div className="divide-y divide-white/5">
+                      {timeSlots.map((hour) => (
+                        <div key={hour} className="grid grid-cols-8 min-h-[60px]">
+                          <div className="w-16 py-2 text-center text-xs text-gray-500 font-mono border-r border-white/5">
+                            {hour}:00
+                          </div>
+                          {weekDays.map((day) => {
+                            const dayHourAppointments = getAppointmentsForDay(day).filter((a: any) => 
+                              new Date(a.scheduledAt).getHours() === hour
+                            );
+                            return (
+                              <div 
+                                key={`${day.toISOString()}-${hour}`} 
+                                className="border-r border-white/5 last:border-r-0 p-1 relative group hover:bg-white/[0.02]"
+                              >
+                                {dayHourAppointments.map((appointment: any) => (
+                                  <div
+                                    key={appointment.id}
+                                    className={`text-[10px] p-1 rounded mb-1 truncate cursor-pointer ${statusColors[appointment.status] || statusColors.pending}`}
+                                    title={`${appointment.customer?.name} - ${appointment.service?.name}`}
+                                    onClick={() => {
+                                      setSelectedDate(day);
+                                      setViewMode('day');
+                                    }}
+                                  >
+                                    <div className="font-medium truncate">{appointment.customer?.name}</div>
+                                    <div className="opacity-70">{format(new Date(appointment.scheduledAt), 'HH:mm')}</div>
+                                  </div>
+                                ))}
+                                {dayHourAppointments.length === 0 && (
+                                  <div 
+                                    className="w-full h-full min-h-[40px] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedDate(day);
+                                      openNewAppointmentDialog(hour);
+                                    }}
+                                  >
+                                    <Plus className="w-3 h-3 text-primary" />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
