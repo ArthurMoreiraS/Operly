@@ -79,6 +79,7 @@ export default function Schedule() {
       if (!response.ok) throw new Error("Failed to fetch appointment counts");
       return response.json() as Promise<Record<string, number>>;
     },
+    staleTime: 5 * 60 * 1000, // 5 minutos de cache
   });
 
   const { data: customers } = useQuery({

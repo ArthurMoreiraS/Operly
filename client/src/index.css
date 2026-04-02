@@ -154,10 +154,26 @@
 }
 
 /* Custom dialog animations */
+.dialog-overlay {
+  animation: overlay-enter 200ms ease-out;
+}
+
+.dialog-overlay[data-state="closed"] {
+  animation: overlay-exit 150ms ease-in;
+}
+
+.dialog-content {
+  animation: dialog-enter 200ms ease-out;
+}
+
+.dialog-content[data-state="closed"] {
+  animation: dialog-exit 150ms ease-in;
+}
+
 @keyframes dialog-enter {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.96);
+    transform: translate(-50%, -50%) scale(0.95);
   }
   to {
     opacity: 1;
@@ -172,7 +188,7 @@
   }
   to {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.96);
+    transform: translate(-50%, -50%) scale(0.95);
   }
 }
 
@@ -184,20 +200,4 @@
 @keyframes overlay-exit {
   from { opacity: 1; }
   to { opacity: 0; }
-}
-
-.dialog-overlay[data-state="open"] {
-  animation: overlay-enter 300ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.dialog-overlay[data-state="closed"] {
-  animation: overlay-exit 250ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.dialog-content[data-state="open"] {
-  animation: dialog-enter 300ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.dialog-content[data-state="closed"] {
-  animation: dialog-exit 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }

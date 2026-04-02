@@ -11,9 +11,17 @@ import { Loader2, ArrowRight } from "lucide-react";
 import { useState } from "react";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Nome muito curto"),
-  whatsapp: z.string().min(10, "WhatsApp inválido"),
-  email: z.string().email("Email inválido"),
+  name: z.string()
+    .min(2, "Nome muito curto")
+    .max(100, "Nome muito longo")
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras"),
+  whatsapp: z.string()
+    .min(10, "WhatsApp inválido")
+    .max(15, "WhatsApp inválido")
+    .regex(/^[\d\s()+-]+$/, "WhatsApp deve conter apenas números"),
+  email: z.string()
+    .email("Email inválido")
+    .max(255, "Email muito longo"),
   size: z.string({ required_error: "Selecione o tamanho do negócio" }),
 });
 
