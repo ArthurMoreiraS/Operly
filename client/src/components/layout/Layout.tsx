@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { Menu, X } from "lucide-react";
+import { useLeadNotifications } from "@/hooks/useLeadNotifications";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,9 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Initialize WebSocket connection for real-time lead notifications
+  useLeadNotifications();
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">

@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { initWebSocket } from "./websocket";
 
 const app = express();
 
@@ -15,15 +16,15 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "blob:"],
+      imgSrc: ["'self'", "data:", "blob:", "https://grainy-gradients.vercel.app"],
       scriptSrc: ["'self'"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "ws:", "wss:"],
     },
   },
   crossOriginEmbedderPolicy: false, // Required for some external resources
 }));
 
-// CORS configuration for Vercel frontend
+// CORS configuration for frontend
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || "http://localhost:5000",
   credentials: true,
@@ -90,6 +91,9 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
+  
+  // Initialize WebSocket for real-time notifications
+  initWebSocket(httpServer);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

@@ -2,6 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
+import { sendNewLeadNotification } from "./email";
+import { notifyNewLead } from "./websocket";
 import { 
   insertCustomerSchema, 
   insertVehicleSchema, 
@@ -292,6 +294,15 @@ export async function registerRoutes(
     try {
       const data = insertLeadSchema.parse(req.body);
       const lead = await storage.createLead(data);
+      
+      // Send email notification to admin (fire and forget - don't block response)
+      sendNewLeadNotification(lead).catch((err) => {
+        console.error('Failed to send lead notification email:', err);
+      });
+      
+      // Send real-time notification via WebSocket
+      notifyNewLead(lead);
+      
       res.status(201).json(lead);
     } catch (error) {
       if (error instanceof z.ZodError) {

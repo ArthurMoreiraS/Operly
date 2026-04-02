@@ -57,12 +57,6 @@ export function metaImagesPlugin(): Plugin {
 
 function getDeploymentUrl(): string | null {
   // Support common deployment environment variables
-  if (process.env.VERCEL_URL) {
-    const url = `https://${process.env.VERCEL_URL}`;
-    log('[meta-images] using Vercel URL:', url);
-    return url;
-  }
-
   if (process.env.RENDER_EXTERNAL_URL) {
     log('[meta-images] using Render URL:', process.env.RENDER_EXTERNAL_URL);
     return process.env.RENDER_EXTERNAL_URL;

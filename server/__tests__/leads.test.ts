@@ -23,6 +23,18 @@ jest.mock('../storage', () => ({
   storage: mockStorage,
 }));
 
+// Mock email service
+const mockSendNewLeadNotification = jest.fn().mockResolvedValue(true);
+jest.mock('../email', () => ({
+  sendNewLeadNotification: mockSendNewLeadNotification,
+}));
+
+// Mock websocket service
+const mockNotifyNewLead = jest.fn();
+jest.mock('../websocket', () => ({
+  notifyNewLead: mockNotifyNewLead,
+}));
+
 import { registerRoutes } from '../routes';
 
 // Helper to create admin session mock
@@ -115,6 +127,59 @@ describe('Lead Routes', () => {
       expect(response.status).toBe(201);
       expect(response.body.name).toBe('João Silva');
       expect(response.body.status).toBe('new');
+    });
+
+    it('should send email notification when lead is created', async () => {
+      const createdLead = {
+        id: 1,
+        name: 'Maria Santos',
+        whatsapp: '11888888888',
+        email: 'maria@test.com',
+        teamSize: '4-10',
+        status: 'new',
+        createdAt: new Date(),
+      };
+      mockStorage.createLead.mockResolvedValueOnce(createdLead);
+
+      const response = await request(app)
+        .post('/api/leads')
+        .send({
+          name: 'Maria Santos',
+          whatsapp: '11888888888',
+          email: 'maria@test.com',
+          teamSize: '4-10',
+        });
+
+      expect(response.status).toBe(201);
+      expect(mockSendNewLeadNotification).toHaveBeenCalledTimes(1);
+      expect(mockSendNewLeadNotification).toHaveBeenCalledWith(createdLead);
+    });
+
+    it('should still create lead even if email notification fails', async () => {
+      const createdLead = {
+        id: 2,
+        name: 'Carlos Oliveira',
+        whatsapp: '11777777777',
+        email: 'carlos@test.com',
+        teamSize: '1-3',
+        status: 'new',
+        createdAt: new Date(),
+      };
+      mockStorage.createLead.mockResolvedValueOnce(createdLead);
+      mockSendNewLeadNotification.mockRejectedValueOnce(new Error('Email service unavailable'));
+
+      const response = await request(app)
+        .post('/api/leads')
+        .send({
+          name: 'Carlos Oliveira',
+          whatsapp: '11777777777',
+          email: 'carlos@test.com',
+          teamSize: '1-3',
+        });
+
+      // Lead should still be created successfully
+      expect(response.status).toBe(201);
+      expect(response.body.name).toBe('Carlos Oliveira');
     });
 
     it('should return 400 for invalid data', async () => {
