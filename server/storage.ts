@@ -69,7 +69,7 @@ export interface IStorage {
   deleteService(id: number): Promise<void>;
   
   // Appointment methods (business-scoped)
-  getAppointments(businessId: number, date?: Date): Promise<any[]>;
+  getAppointments(businessId: number, date?: Date, status?: string): Promise<any[]>;
   getAppointment(id: number): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined>;
@@ -308,87 +308,56 @@ export class DrizzleStorage implements IStorage {
   }
 
   // Appointment methods
-  async getAppointments(businessId: number, date?: Date): Promise<any[]> {
-    let baseQuery = this.db
-      .select({
-        id: appointments.id,
-        businessId: appointments.businessId,
-        scheduledAt: appointments.scheduledAt,
-        duration: appointments.duration,
-        status: appointments.status,
-        notes: appointments.notes,
-        createdAt: appointments.createdAt,
-        customer: {
-          id: customers.id,
-          name: customers.name,
-          phone: customers.phone,
-        },
-        vehicle: {
-          id: vehicles.id,
-          brand: vehicles.brand,
-          model: vehicles.model,
-          plate: vehicles.plate,
-        },
-        service: {
-          id: services.id,
-          name: services.name,
-          price: services.price,
-        },
-      })
-      .from(appointments)
-      .leftJoin(customers, eq(appointments.customerId, customers.id))
-      .leftJoin(vehicles, eq(appointments.vehicleId, vehicles.id))
-      .leftJoin(services, eq(appointments.serviceId, services.id))
-      .where(eq(appointments.businessId, businessId))
-      .orderBy(appointments.scheduledAt);
+  async getAppointments(businessId: number, date?: Date, status?: string): Promise<any[]> {
+    const selectFields = {
+      id: appointments.id,
+      businessId: appointments.businessId,
+      scheduledAt: appointments.scheduledAt,
+      duration: appointments.duration,
+      status: appointments.status,
+      notes: appointments.notes,
+      createdAt: appointments.createdAt,
+      customer: {
+        id: customers.id,
+        name: customers.name,
+        phone: customers.phone,
+      },
+      vehicle: {
+        id: vehicles.id,
+        brand: vehicles.brand,
+        model: vehicles.model,
+        plate: vehicles.plate,
+      },
+      service: {
+        id: services.id,
+        name: services.name,
+        price: services.price,
+      },
+    };
+
+    const conditions = [eq(appointments.businessId, businessId)];
 
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
-      
-      return await this.db
-        .select({
-          id: appointments.id,
-          businessId: appointments.businessId,
-          scheduledAt: appointments.scheduledAt,
-          duration: appointments.duration,
-          status: appointments.status,
-          notes: appointments.notes,
-          createdAt: appointments.createdAt,
-          customer: {
-            id: customers.id,
-            name: customers.name,
-            phone: customers.phone,
-          },
-          vehicle: {
-            id: vehicles.id,
-            brand: vehicles.brand,
-            model: vehicles.model,
-            plate: vehicles.plate,
-          },
-          service: {
-            id: services.id,
-            name: services.name,
-            price: services.price,
-          },
-        })
-        .from(appointments)
-        .leftJoin(customers, eq(appointments.customerId, customers.id))
-        .leftJoin(vehicles, eq(appointments.vehicleId, vehicles.id))
-        .leftJoin(services, eq(appointments.serviceId, services.id))
-        .where(
-          and(
-            eq(appointments.businessId, businessId),
-            gte(appointments.scheduledAt, startOfDay),
-            lte(appointments.scheduledAt, endOfDay)
-          )
-        )
-        .orderBy(appointments.scheduledAt);
+      conditions.push(gte(appointments.scheduledAt, startOfDay));
+      conditions.push(lte(appointments.scheduledAt, endOfDay));
     }
 
-    return await baseQuery;
+    if (status) {
+      conditions.push(eq(appointments.status, status));
+    }
+
+    return await this.db
+      .select(selectFields)
+      .from(appointments)
+      .leftJoin(customers, eq(appointments.customerId, customers.id))
+      .leftJoin(vehicles, eq(appointments.vehicleId, vehicles.id))
+      .leftJoin(services, eq(appointments.serviceId, services.id))
+      .where(and(...conditions))
+      .orderBy(appointments.scheduledAt);
   }
 
   async getAppointment(id: number): Promise<Appointment | undefined> {

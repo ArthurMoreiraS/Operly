@@ -359,7 +359,7 @@ export async function registerRoutes(
       }
       const dateStr = req.query.date as string;
       const date = dateStr ? new Date(dateStr) : undefined;
-      const appointments = await storage.getAppointments(business.id, date);
+      const appointments = await storage.getAppointments(business.id, date, undefined);
       // Only return scheduledAt and duration for availability checking (no personal data)
       res.json(appointments.map(a => ({ scheduledAt: a.scheduledAt, duration: a.duration })));
     } catch (error) {
@@ -634,7 +634,8 @@ export async function registerRoutes(
   app.get("/api/appointments", authMiddleware, async (req, res) => {
     try {
       const date = req.query.date ? new Date(req.query.date as string) : undefined;
-      const appointments = await storage.getAppointments(req.business!.id, date);
+      const status = req.query.status as string | undefined;
+      const appointments = await storage.getAppointments(req.business!.id, date, status);
       res.json(appointments);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch appointments" });
