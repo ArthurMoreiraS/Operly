@@ -308,11 +308,13 @@ export default function Settings() {
         <p className="text-sm md:text-base text-gray-400">Gerencie sua conta e preferências do sistema.</p>
       </div>
 
-      <Tabs defaultValue="business" className="w-full">
+      <Tabs defaultValue={user?.role === 'admin' ? 'account' : 'business'} className="w-full">
         <TabsList className="glass-card bg-white/5 border-white/5 p-1 h-auto w-full justify-start rounded-xl mb-6 overflow-x-auto flex-nowrap">
-          <TabsTrigger value="business" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-400 rounded-lg px-3 md:px-4 py-2 flex gap-2 whitespace-nowrap text-sm">
-            <Store className="w-4 h-4" /> <span className="hidden sm:inline">Negócio</span>
-          </TabsTrigger>
+          {user?.role !== 'admin' && (
+            <TabsTrigger value="business" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-400 rounded-lg px-3 md:px-4 py-2 flex gap-2 whitespace-nowrap text-sm">
+              <Store className="w-4 h-4" /> <span className="hidden sm:inline">Negócio</span>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="account" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-400 rounded-lg px-3 md:px-4 py-2 flex gap-2 whitespace-nowrap text-sm">
             <User className="w-4 h-4" /> <span className="hidden sm:inline">Conta</span>
           </TabsTrigger>
@@ -321,11 +323,14 @@ export default function Settings() {
               <Users className="w-4 h-4" /> <span className="hidden sm:inline">Equipe</span>
             </TabsTrigger>
           )}
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-400 rounded-lg px-3 md:px-4 py-2 flex gap-2 whitespace-nowrap text-sm">
-            <Bell className="w-4 h-4" /> <span className="hidden sm:inline">Notificações</span>
-          </TabsTrigger>
+          {user?.role !== 'admin' && (
+            <TabsTrigger value="notifications" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-400 rounded-lg px-3 md:px-4 py-2 flex gap-2 whitespace-nowrap text-sm">
+              <Bell className="w-4 h-4" /> <span className="hidden sm:inline">Notificações</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
+        {user?.role !== 'admin' && (
         <TabsContent value="business" className="space-y-6">
           <Card className="glass-card border-white/5">
             <CardHeader>
@@ -440,6 +445,7 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         <TabsContent value="account" className="space-y-6">
           <Card className="glass-card border-white/5">
@@ -714,6 +720,7 @@ export default function Settings() {
           </TabsContent>
         )}
 
+        {user?.role !== 'admin' && (
         <TabsContent value="notifications" className="space-y-6">
           <Card className="glass-card border-white/5">
             <CardHeader>
@@ -771,6 +778,7 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
       </Tabs>
     </motion.div>
   );
