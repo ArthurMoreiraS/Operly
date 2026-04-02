@@ -13,7 +13,7 @@ import {
 } from "@shared/schema";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, sql, ne } from "drizzle-orm";
 import crypto from "crypto";
 
 export interface IStorage {
@@ -40,8 +40,10 @@ export interface IStorage {
   
   // Lead methods
   getLeads(): Promise<Lead[]>;
+  getArchivedLeads(): Promise<Lead[]>;
   createLead(lead: InsertLead): Promise<Lead>;
   updateLead(id: number, lead: Partial<Lead>): Promise<Lead | undefined>;
+  deleteLead(id: number): Promise<Lead | undefined>;
   
   // Customer methods (business-scoped)
   getCustomers(businessId: number): Promise<(Customer & { vehicleCount: number })[]>;
@@ -179,7 +181,11 @@ export class DrizzleStorage implements IStorage {
 
   // Lead methods
   async getLeads(): Promise<Lead[]> {
-    return await this.db.select().from(leads).orderBy(desc(leads.createdAt));
+    return await this.db.select().from(leads).where(ne(leads.status, 'archived')).orderBy(desc(leads.createdAt));
+  }
+
+  async getArchivedLeads(): Promise<Lead[]> {
+    return await this.db.select().from(leads).where(eq(leads.status, 'archived')).orderBy(desc(leads.createdAt));
   }
 
   async createLead(lead: InsertLead): Promise<Lead> {
@@ -189,6 +195,11 @@ export class DrizzleStorage implements IStorage {
 
   async updateLead(id: number, lead: Partial<Lead>): Promise<Lead | undefined> {
     const result = await this.db.update(leads).set(lead).where(eq(leads.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteLead(id: number): Promise<Lead | undefined> {
+    const result = await this.db.delete(leads).where(eq(leads.id, id)).returning();
     return result[0];
   }
 

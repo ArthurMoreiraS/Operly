@@ -1023,6 +1023,30 @@ export async function registerRoutes(
     }
   });
 
+  // Get archived leads (admin only)
+  app.get("/api/leads/archived", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const archivedLeads = await storage.getArchivedLeads();
+      res.json(archivedLeads);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch archived leads" });
+    }
+  });
+
+  // Delete lead (admin only)
+  app.delete("/api/leads/:id", authMiddleware, adminOnly, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const lead = await storage.deleteLead(id);
+      if (!lead) {
+        return res.status(404).json({ error: "Lead not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete lead" });
+    }
+  });
+
   // Seed/Init test account
   app.post("/api/init", async (req, res) => {
     try {
