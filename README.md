@@ -58,6 +58,8 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/operly
 SESSION_SECRET=sua-chave-secreta-com-32-caracteres
 ```
 
+> 📖 **Time de desenvolvimento?** Veja [docs/DEV_DATABASE.md](docs/DEV_DATABASE.md) para configurar o banco compartilhado com Neon.
+
 ### Executar
 
 ```bash
