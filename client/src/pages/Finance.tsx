@@ -628,6 +628,7 @@ export default function Finance() {
         <DialogContent className="glass-card border-white/10 text-white w-[calc(100%-2rem)] max-w-md sm:w-full">
           <DialogHeader>
             <DialogTitle className="text-white text-xl">Detalhes da OS #{selectedOrder?.id}</DialogTitle>
+            <DialogDescription className="text-gray-400">Informações completas da ordem de serviço.</DialogDescription>
           </DialogHeader>
           
           {selectedOrder && (

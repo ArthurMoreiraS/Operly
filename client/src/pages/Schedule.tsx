@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -600,6 +601,7 @@ export default function Schedule() {
         <DialogContent className="glass-card border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white text-xl">Novo Agendamento</DialogTitle>
+            <DialogDescription className="text-gray-400">Preencha os dados para criar um novo agendamento.</DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
