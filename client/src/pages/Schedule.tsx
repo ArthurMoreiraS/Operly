@@ -233,30 +233,34 @@ export default function Schedule() {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
+      className="space-y-4 md:space-y-6"
     >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 md:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Agendamentos</h1>
-          <p className="text-gray-400">Gerencie sua agenda de serviços.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2">Agendamentos</h1>
+          <p className="text-sm md:text-base text-gray-400">Gerencie sua agenda de serviços.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 md:gap-3">
           <Button 
             variant="outline" 
-            className={`glass-card border-white/10 hover:bg-white/10 text-white ${showFilters ? 'bg-white/10' : ''}`}
+            size="sm"
+            className={`glass-card border-white/10 hover:bg-white/10 text-white flex-1 md:flex-none ${showFilters ? 'bg-white/10' : ''}`}
             onClick={() => setShowFilters(!showFilters)}
             data-testid="button-filters"
           >
-            <Filter className="w-4 h-4 mr-2" />
-            Filtros
+            <Filter className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Filtros</span>
+            <span className="sm:hidden">Filtrar</span>
           </Button>
           <Button 
-            className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-none"
+            size="sm"
+            className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-none flex-1 md:flex-none"
             onClick={() => openNewAppointmentDialog()}
             data-testid="button-new-appointment"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Agendamento
+            <Plus className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Novo Agendamento</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </div>
       </div>
@@ -265,7 +269,7 @@ export default function Schedule() {
         <motion.div 
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="glass-card border-white/5 p-4 rounded-xl"
+          className="glass-card border-white/5 p-3 md:p-4 rounded-xl"
         >
           <div className="flex flex-wrap gap-2">
             <Button 
@@ -291,11 +295,12 @@ export default function Schedule() {
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
+        {/* Sidebar - Calendar and Summary (collapsible on mobile) */}
+        <div className="lg:col-span-1 space-y-4 md:space-y-6">
           <Card className="glass-card border-white/5">
             <CardContent className="p-0">
-              <div className="p-4 border-b border-white/5 flex items-center justify-between">
+              <div className="p-3 md:p-4 border-b border-white/5 flex items-center justify-between">
                 <button 
                   onClick={handlePrevMonth}
                   className="p-1 hover:bg-white/5 rounded-full transition-colors"
@@ -303,7 +308,7 @@ export default function Schedule() {
                 >
                   <ChevronLeft className="w-4 h-4 text-gray-400" />
                 </button>
-                <span className="font-semibold text-white capitalize">
+                <span className="font-semibold text-white capitalize text-sm md:text-base">
                   {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
                 </span>
                 <button 
@@ -314,12 +319,12 @@ export default function Schedule() {
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </button>
               </div>
-              <div className="p-4 grid grid-cols-7 gap-1 text-center text-sm">
+              <div className="p-2 md:p-4 grid grid-cols-7 gap-0.5 md:gap-1 text-center text-xs md:text-sm">
                 {["D", "S", "T", "Q", "Q", "S", "S"].map((d, idx) => (
-                  <span key={`weekday-${idx}`} className="text-gray-500 font-medium h-8 flex items-center justify-center">{d}</span>
+                  <span key={`weekday-${idx}`} className="text-gray-500 font-medium h-6 md:h-8 flex items-center justify-center">{d}</span>
                 ))}
                 {Array.from({ length: startDayOfWeek }).map((_, idx) => (
-                  <div key={`empty-${idx}`} className="h-8" />
+                  <div key={`empty-${idx}`} className="h-6 md:h-8" />
                 ))}
                 {daysInMonth.map((day) => {
                   const isSelected = isSameDay(day, selectedDate);
@@ -331,7 +336,7 @@ export default function Schedule() {
                     <button 
                       key={day.toISOString()}
                       onClick={() => handleDayClick(day)}
-                      className={`h-8 w-8 rounded-full flex items-center justify-center transition-all text-sm mx-auto relative
+                      className={`h-6 w-6 md:h-8 md:w-8 rounded-full flex items-center justify-center transition-all text-xs md:text-sm mx-auto relative
                         ${isSelected 
                           ? 'bg-primary text-white shadow-lg shadow-primary/20' 
                           : isToday 
@@ -342,7 +347,7 @@ export default function Schedule() {
                     >
                       {format(day, 'd')}
                       {hasAppointments && !isSelected && (
-                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+                        <span className="absolute bottom-0 md:bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
                       )}
                     </button>
                   );
@@ -351,8 +356,9 @@ export default function Schedule() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-white/5">
-            <CardHeader>
+          {/* Summary card - hidden on mobile, show as horizontal stats */}
+          <Card className="glass-card border-white/5 hidden lg:block">
+            <CardHeader className="pb-2">
               <h3 className="text-white text-sm font-semibold">Resumo do Dia</h3>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -380,13 +386,33 @@ export default function Schedule() {
               </div>
             </CardContent>
           </Card>
+          
+          {/* Mobile summary - horizontal stats bar */}
+          <div className="lg:hidden flex gap-2 overflow-x-auto pb-1">
+            <div className="flex-shrink-0 bg-white/5 rounded-lg px-3 py-2 text-center min-w-[70px]">
+              <div className="text-white font-bold text-lg">{appointments?.length || 0}</div>
+              <div className="text-gray-400 text-[10px]">Total</div>
+            </div>
+            <div className="flex-shrink-0 bg-emerald-500/10 rounded-lg px-3 py-2 text-center min-w-[70px]">
+              <div className="text-emerald-400 font-bold text-lg">{appointments?.filter((a: any) => a.status === 'confirmed').length || 0}</div>
+              <div className="text-gray-400 text-[10px]">Confirmado</div>
+            </div>
+            <div className="flex-shrink-0 bg-amber-500/10 rounded-lg px-3 py-2 text-center min-w-[70px]">
+              <div className="text-amber-400 font-bold text-lg">{appointments?.filter((a: any) => a.status === 'pending').length || 0}</div>
+              <div className="text-gray-400 text-[10px]">Pendente</div>
+            </div>
+            <div className="flex-shrink-0 bg-blue-500/10 rounded-lg px-3 py-2 text-center min-w-[70px]">
+              <div className="text-blue-400 font-bold text-lg">{appointments?.filter((a: any) => a.status === 'in-progress').length || 0}</div>
+              <div className="text-gray-400 text-[10px]">Andamento</div>
+            </div>
+          </div>
         </div>
 
         <div className="lg:col-span-3">
-          <Card className="glass-card border-white/5 h-full min-h-[600px]">
-            <CardHeader className="border-b border-white/5 pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white font-medium">
+          <Card className="glass-card border-white/5 h-full min-h-[400px] md:min-h-[600px]">
+            <CardHeader className="border-b border-white/5 p-3 md:pb-4 md:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
                   <button
                     onClick={() => {
                       if (viewMode === 'day') {
@@ -400,11 +426,11 @@ export default function Schedule() {
                   >
                     <ChevronLeft className="w-4 h-4 text-gray-400" />
                   </button>
-                  <CalendarIcon className="w-4 h-4 text-primary" />
-                  <span className="capitalize min-w-[200px] text-center">
+                  <CalendarIcon className="w-4 h-4 text-primary hidden sm:block" />
+                  <span className="capitalize text-xs sm:text-sm md:text-base text-center flex-1 sm:flex-none sm:min-w-[180px] md:min-w-[200px]">
                     {viewMode === 'day' 
-                      ? format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
-                      : `${format(weekStart, "dd 'de' MMM", { locale: ptBR })} - ${format(addDays(weekStart, 6), "dd 'de' MMM", { locale: ptBR })}`
+                      ? format(selectedDate, "EEE, dd MMM", { locale: ptBR })
+                      : `${format(weekStart, "dd MMM", { locale: ptBR })} - ${format(addDays(weekStart, 6), "dd MMM", { locale: ptBR })}`
                     }
                   </span>
                   <button
@@ -421,16 +447,16 @@ export default function Schedule() {
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                   </button>
                 </div>
-                <div className="flex bg-white/5 rounded-lg p-1">
+                <div className="flex bg-white/5 rounded-lg p-1 self-center sm:self-auto">
                   <button 
-                    className={`px-3 py-1 text-xs rounded-md transition-colors ${viewMode === 'day' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
+                    className={`px-2 sm:px-3 py-1 text-xs rounded-md transition-colors ${viewMode === 'day' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
                     onClick={() => setViewMode('day')}
                     data-testid="view-day"
                   >
                     Dia
                   </button>
                   <button 
-                    className={`px-3 py-1 text-xs rounded-md transition-colors ${viewMode === 'week' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
+                    className={`px-2 sm:px-3 py-1 text-xs rounded-md transition-colors ${viewMode === 'week' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
                     onClick={() => setViewMode('week')}
                     data-testid="view-week"
                   >
@@ -439,10 +465,10 @@ export default function Schedule() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-0 relative overflow-y-auto max-h-[550px]">
+            <CardContent className="p-0 relative overflow-y-auto max-h-[350px] md:max-h-[550px]">
               {viewMode === 'day' ? (
                 <>
-                  <div className="absolute left-16 top-0 bottom-0 w-px bg-white/5 z-0" />
+                  <div className="absolute left-12 md:left-16 top-0 bottom-0 w-px bg-white/5 z-0" />
                   
                   <div className="divide-y divide-white/5">
                     {timeSlots.map((hour) => {
@@ -452,11 +478,11 @@ export default function Schedule() {
                   }) || [];
                   
                   return (
-                    <div key={hour} className="flex min-h-[80px] group hover:bg-white/[0.02] transition-colors relative">
-                      <div className="w-16 py-4 text-center text-xs text-gray-500 font-mono border-r border-white/5 shrink-0">
+                    <div key={hour} className="flex min-h-[60px] md:min-h-[80px] group hover:bg-white/[0.02] transition-colors relative">
+                      <div className="w-12 md:w-16 py-2 md:py-4 text-center text-[10px] md:text-xs text-gray-500 font-mono border-r border-white/5 shrink-0">
                         {hour}:00
                       </div>
-                      <div className="flex-1 p-2 relative">
+                      <div className="flex-1 p-1 md:p-2 relative">
                         {hourAppointments.map((appointment: any) => {
                           const durationHours = Math.max(appointment.duration / 60, 0.5);
                           return (
@@ -464,23 +490,24 @@ export default function Schedule() {
                               key={appointment.id}
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              className={`absolute top-1 left-2 right-2 z-10 p-3 rounded-xl border backdrop-blur-md shadow-sm cursor-pointer hover:shadow-md transition-all ${statusColors[appointment.status] || statusColors.pending}`}
-                              style={{ minHeight: `${Math.min(durationHours * 80 - 10, 70)}px` }}
+                              className={`absolute top-1 left-1 right-1 md:left-2 md:right-2 z-10 p-2 md:p-3 rounded-lg md:rounded-xl border backdrop-blur-md shadow-sm cursor-pointer hover:shadow-md transition-all ${statusColors[appointment.status] || statusColors.pending}`}
+                              style={{ minHeight: `${Math.min(durationHours * 60 - 10, 50)}px` }}
                               data-testid={`appointment-${appointment.id}`}
                             >
-                              <div className="flex justify-between items-start gap-2">
+                              <div className="flex justify-between items-start gap-1 md:gap-2">
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-sm truncate">{appointment.customer?.name}</h4>
-                                  <p className="text-xs opacity-80 mt-0.5 flex items-center gap-1">
-                                    <Clock className="w-3 h-3 shrink-0" />
-                                    {format(new Date(appointment.scheduledAt), 'HH:mm')} - {appointment.duration} min
+                                  <h4 className="font-semibold text-xs md:text-sm truncate">{appointment.customer?.name}</h4>
+                                  <p className="text-[10px] md:text-xs opacity-80 mt-0.5 flex items-center gap-1">
+                                    <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0" />
+                                    {format(new Date(appointment.scheduledAt), 'HH:mm')}
+                                    <span className="hidden sm:inline"> - {appointment.duration} min</span>
                                   </p>
                                 </div>
                                 <Select
                                   value={appointment.status}
                                   onValueChange={(value) => updateAppointmentMutation.mutate({ id: appointment.id, status: value })}
                                 >
-                                  <SelectTrigger className="h-6 w-auto text-[10px] bg-black/20 border-white/10 text-inherit">
+                                  <SelectTrigger className="h-5 md:h-6 w-auto text-[8px] md:text-[10px] bg-black/20 border-white/10 text-inherit px-1 md:px-2">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent className="glass-card border-white/10">
@@ -491,7 +518,7 @@ export default function Schedule() {
                                   </SelectContent>
                                 </Select>
                               </div>
-                              <p className="text-xs mt-1 opacity-70 truncate">
+                              <p className="text-[10px] md:text-xs mt-1 opacity-70 truncate hidden sm:block">
                                 {appointment.vehicle?.brand} {appointment.vehicle?.model} • {appointment.service?.name}
                               </p>
                             </motion.div>
@@ -503,11 +530,13 @@ export default function Schedule() {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="text-primary hover:text-primary hover:bg-primary/10 h-8"
+                              className="text-primary hover:text-primary hover:bg-primary/10 h-6 md:h-8 text-xs"
                               onClick={() => openNewAppointmentDialog(hour)}
                               data-testid={`add-appointment-${hour}`}
                             >
-                              <Plus className="w-4 h-4 mr-1" /> Adicionar
+                              <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1" /> 
+                              <span className="hidden sm:inline">Adicionar</span>
+                              <span className="sm:hidden">+</span>
                             </Button>
                           </div>
                         )}
@@ -518,22 +547,22 @@ export default function Schedule() {
               </div>
                 </>
               ) : (
-                <div className="overflow-x-auto">
-                  <div className="min-w-[700px]">
+                <div className="overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0">
+                  <div className="min-w-[500px] md:min-w-[700px]">
                     {/* Week header */}
                     <div className="grid grid-cols-8 border-b border-white/5">
-                      <div className="w-16 p-2 text-xs text-gray-500 font-medium border-r border-white/5"></div>
+                      <div className="w-10 md:w-16 p-1 md:p-2 text-[10px] md:text-xs text-gray-500 font-medium border-r border-white/5"></div>
                       {weekDays.map((day) => (
                         <div 
                           key={day.toISOString()} 
-                          className={`p-2 text-center border-r border-white/5 last:border-r-0 ${
+                          className={`p-1 md:p-2 text-center border-r border-white/5 last:border-r-0 ${
                             isSameDay(day, new Date()) ? 'bg-primary/10' : ''
                           }`}
                         >
-                          <div className="text-xs text-gray-400 uppercase">
+                          <div className="text-[10px] md:text-xs text-gray-400 uppercase">
                             {format(day, 'EEE', { locale: ptBR })}
                           </div>
-                          <div className={`text-sm font-medium ${
+                          <div className={`text-xs md:text-sm font-medium ${
                             isSameDay(day, selectedDate) ? 'text-primary' : 'text-white'
                           }`}>
                             {format(day, 'd')}
@@ -545,8 +574,8 @@ export default function Schedule() {
                     {/* Time slots */}
                     <div className="divide-y divide-white/5">
                       {timeSlots.map((hour) => (
-                        <div key={hour} className="grid grid-cols-8 min-h-[60px]">
-                          <div className="w-16 py-2 text-center text-xs text-gray-500 font-mono border-r border-white/5">
+                        <div key={hour} className="grid grid-cols-8 min-h-[50px] md:min-h-[60px]">
+                          <div className="w-10 md:w-16 py-2 text-center text-[10px] md:text-xs text-gray-500 font-mono border-r border-white/5">
                             {hour}:00
                           </div>
                           {weekDays.map((day) => {
@@ -556,12 +585,12 @@ export default function Schedule() {
                             return (
                               <div 
                                 key={`${day.toISOString()}-${hour}`} 
-                                className="border-r border-white/5 last:border-r-0 p-1 relative group hover:bg-white/[0.02]"
+                                className="border-r border-white/5 last:border-r-0 p-0.5 md:p-1 relative group hover:bg-white/[0.02]"
                               >
                                 {dayHourAppointments.map((appointment: any) => (
                                   <div
                                     key={appointment.id}
-                                    className={`text-[10px] p-1 rounded mb-1 truncate cursor-pointer ${statusColors[appointment.status] || statusColors.pending}`}
+                                    className={`text-[8px] md:text-[10px] p-0.5 md:p-1 rounded mb-0.5 md:mb-1 truncate cursor-pointer ${statusColors[appointment.status] || statusColors.pending}`}
                                     title={`${appointment.customer?.name} - ${appointment.service?.name}`}
                                     onClick={() => {
                                       setSelectedDate(day);
@@ -569,18 +598,18 @@ export default function Schedule() {
                                     }}
                                   >
                                     <div className="font-medium truncate">{appointment.customer?.name}</div>
-                                    <div className="opacity-70">{format(new Date(appointment.scheduledAt), 'HH:mm')}</div>
+                                    <div className="opacity-70 hidden md:block">{format(new Date(appointment.scheduledAt), 'HH:mm')}</div>
                                   </div>
                                 ))}
                                 {dayHourAppointments.length === 0 && (
                                   <div 
-                                    className="w-full h-full min-h-[40px] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                                    className="w-full h-full min-h-[30px] md:min-h-[40px] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
                                     onClick={() => {
                                       setSelectedDate(day);
                                       openNewAppointmentDialog(hour);
                                     }}
                                   >
-                                    <Plus className="w-3 h-3 text-primary" />
+                                    <Plus className="w-2.5 h-2.5 md:w-3 md:h-3 text-primary" />
                                   </div>
                                 )}
                               </div>
@@ -598,13 +627,13 @@ export default function Schedule() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="glass-card border-white/10 text-white max-w-md">
+        <DialogContent className="glass-card border-white/10 text-white w-[calc(100%-2rem)] max-w-md sm:w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white text-xl">Novo Agendamento</DialogTitle>
             <DialogDescription className="text-gray-400">Preencha os dados para criar um novo agendamento.</DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2 md:py-4">
             <div className="space-y-2">
               <Label className="text-gray-300">Data</Label>
               <Input 
