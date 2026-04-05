@@ -563,6 +563,7 @@ export default function Customers() {
               {selectedCustomer?.name}
               {selectedCustomer?.status === "vip" && <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
             </DialogTitle>
+            <DialogDescription className="text-gray-400">Informações e veículos do cliente.</DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">

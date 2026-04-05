@@ -9,9 +9,11 @@ import { initWebSocket } from "./websocket";
 
 const app = express();
 
+const isDev = process.env.NODE_ENV === "development";
+
 // Security headers with Helmet
 app.use(helmet({
-  contentSecurityPolicy: {
+  contentSecurityPolicy: isDev ? false : {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],

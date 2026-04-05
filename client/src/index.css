@@ -155,49 +155,27 @@
 
 /* Custom dialog animations */
 .dialog-overlay {
-  animation: overlay-enter 200ms ease-out;
+  animation: fade-in 150ms ease-out;
 }
 
 .dialog-overlay[data-state="closed"] {
-  animation: overlay-exit 150ms ease-in;
+  animation: fade-out 100ms ease-in;
 }
 
 .dialog-content {
-  animation: dialog-enter 200ms ease-out;
+  animation: fade-in 150ms ease-out;
 }
 
 .dialog-content[data-state="closed"] {
-  animation: dialog-exit 150ms ease-in;
+  animation: fade-out 100ms ease-in;
 }
 
-@keyframes dialog-enter {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes dialog-exit {
-  from {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.95);
-  }
-}
-
-@keyframes overlay-enter {
+@keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes overlay-exit {
+@keyframes fade-out {
   from { opacity: 1; }
   to { opacity: 0; }
 }
