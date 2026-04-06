@@ -295,12 +295,12 @@ export default function Schedule() {
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
-        {/* Sidebar - Calendar and Summary (collapsible on mobile) */}
-        <div className="lg:col-span-1 space-y-4 md:space-y-6">
+      <div className="flex flex-col lg:grid lg:grid-cols-4 gap-4 md:gap-6">
+        {/* Sidebar - Calendar and Summary */}
+        <div className="lg:col-span-1 space-y-3 md:space-y-6 order-1 lg:order-1">
           <Card className="glass-card border-white/5">
             <CardContent className="p-0">
-              <div className="p-3 md:p-4 border-b border-white/5 flex items-center justify-between">
+              <div className="p-2 md:p-4 border-b border-white/5 flex items-center justify-between">
                 <button 
                   onClick={handlePrevMonth}
                   className="p-1 hover:bg-white/5 rounded-full transition-colors"
@@ -308,8 +308,8 @@ export default function Schedule() {
                 >
                   <ChevronLeft className="w-4 h-4 text-gray-400" />
                 </button>
-                <span className="font-semibold text-white capitalize text-sm md:text-base">
-                  {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+                <span className="font-semibold text-white capitalize text-xs md:text-base">
+                  {format(currentMonth, 'MMM yyyy', { locale: ptBR })}
                 </span>
                 <button 
                   onClick={handleNextMonth}
@@ -356,7 +356,7 @@ export default function Schedule() {
             </CardContent>
           </Card>
 
-          {/* Summary card - hidden on mobile, show as horizontal stats */}
+          {/* Summary card - hidden on mobile */}
           <Card className="glass-card border-white/5 hidden lg:block">
             <CardHeader className="pb-2">
               <h3 className="text-white text-sm font-semibold">Resumo do Dia</h3>
@@ -388,31 +388,32 @@ export default function Schedule() {
           </Card>
           
           {/* Mobile summary - horizontal stats bar */}
-          <div className="lg:hidden flex gap-2 overflow-x-auto pb-1">
-            <div className="flex-shrink-0 bg-white/5 rounded-lg px-3 py-2 text-center min-w-[70px]">
-              <div className="text-white font-bold text-lg">{appointments?.length || 0}</div>
-              <div className="text-gray-400 text-[10px]">Total</div>
+          <div className="lg:hidden flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            <div className="flex-shrink-0 bg-white/5 rounded-lg px-2 py-1.5 text-center min-w-[60px]">
+              <div className="text-white font-bold text-base">{appointments?.length || 0}</div>
+              <div className="text-gray-400 text-[9px]">Total</div>
             </div>
-            <div className="flex-shrink-0 bg-emerald-500/10 rounded-lg px-3 py-2 text-center min-w-[70px]">
-              <div className="text-emerald-400 font-bold text-lg">{appointments?.filter((a: any) => a.status === 'confirmed').length || 0}</div>
-              <div className="text-gray-400 text-[10px]">Confirmado</div>
+            <div className="flex-shrink-0 bg-emerald-500/10 rounded-lg px-2 py-1.5 text-center min-w-[60px]">
+              <div className="text-emerald-400 font-bold text-base">{appointments?.filter((a: any) => a.status === 'confirmed').length || 0}</div>
+              <div className="text-gray-400 text-[9px]">Confirmado</div>
             </div>
-            <div className="flex-shrink-0 bg-amber-500/10 rounded-lg px-3 py-2 text-center min-w-[70px]">
-              <div className="text-amber-400 font-bold text-lg">{appointments?.filter((a: any) => a.status === 'pending').length || 0}</div>
-              <div className="text-gray-400 text-[10px]">Pendente</div>
+            <div className="flex-shrink-0 bg-amber-500/10 rounded-lg px-2 py-1.5 text-center min-w-[60px]">
+              <div className="text-amber-400 font-bold text-base">{appointments?.filter((a: any) => a.status === 'pending').length || 0}</div>
+              <div className="text-gray-400 text-[9px]">Pendente</div>
             </div>
-            <div className="flex-shrink-0 bg-blue-500/10 rounded-lg px-3 py-2 text-center min-w-[70px]">
-              <div className="text-blue-400 font-bold text-lg">{appointments?.filter((a: any) => a.status === 'in-progress').length || 0}</div>
-              <div className="text-gray-400 text-[10px]">Andamento</div>
+            <div className="flex-shrink-0 bg-blue-500/10 rounded-lg px-2 py-1.5 text-center min-w-[60px]">
+              <div className="text-blue-400 font-bold text-base">{appointments?.filter((a: any) => a.status === 'in-progress').length || 0}</div>
+              <div className="text-gray-400 text-[9px]">Andamento</div>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-3">
-          <Card className="glass-card border-white/5 h-full min-h-[400px] md:min-h-[600px]">
-            <CardHeader className="border-b border-white/5 p-3 md:pb-4 md:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-1 sm:gap-2 text-white font-medium">
+        {/* Main content */}
+        <div className="lg:col-span-3 order-2 lg:order-2">
+          <Card className="glass-card border-white/5 h-full min-h-[300px] md:min-h-[600px]">
+            <CardHeader className="border-b border-white/5 p-2 sm:p-3 md:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1 text-white font-medium flex-1 min-w-0">
                   <button
                     onClick={() => {
                       if (viewMode === 'day') {
@@ -421,13 +422,13 @@ export default function Schedule() {
                         setSelectedDate(subWeeks(selectedDate, 1));
                       }
                     }}
-                    className="p-1 rounded-md hover:bg-white/10 transition-colors"
+                    className="p-1 rounded-md hover:bg-white/10 transition-colors shrink-0"
                     data-testid="nav-prev"
                   >
                     <ChevronLeft className="w-4 h-4 text-gray-400" />
                   </button>
-                  <CalendarIcon className="w-4 h-4 text-primary hidden sm:block" />
-                  <span className="capitalize text-xs sm:text-sm md:text-base text-center flex-1 sm:flex-none sm:min-w-[180px] md:min-w-[200px]">
+                  <CalendarIcon className="w-4 h-4 text-primary hidden sm:block shrink-0" />
+                  <span className="capitalize text-xs sm:text-sm md:text-base text-center truncate">
                     {viewMode === 'day' 
                       ? format(selectedDate, "EEE, dd MMM", { locale: ptBR })
                       : `${format(weekStart, "dd MMM", { locale: ptBR })} - ${format(addDays(weekStart, 6), "dd MMM", { locale: ptBR })}`
@@ -441,22 +442,22 @@ export default function Schedule() {
                         setSelectedDate(addWeeks(selectedDate, 1));
                       }
                     }}
-                    className="p-1 rounded-md hover:bg-white/10 transition-colors"
+                    className="p-1 rounded-md hover:bg-white/10 transition-colors shrink-0"
                     data-testid="nav-next"
                   >
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                   </button>
                 </div>
-                <div className="flex bg-white/5 rounded-lg p-1 self-center sm:self-auto">
+                <div className="flex bg-white/5 rounded-lg p-0.5 sm:p-1 shrink-0">
                   <button 
-                    className={`px-2 sm:px-3 py-1 text-xs rounded-md transition-colors ${viewMode === 'day' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
+                    className={`px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded-md transition-colors ${viewMode === 'day' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
                     onClick={() => setViewMode('day')}
                     data-testid="view-day"
                   >
                     Dia
                   </button>
                   <button 
-                    className={`px-2 sm:px-3 py-1 text-xs rounded-md transition-colors ${viewMode === 'week' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
+                    className={`px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded-md transition-colors ${viewMode === 'week' ? 'bg-white/10 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
                     onClick={() => setViewMode('week')}
                     data-testid="view-week"
                   >
@@ -465,7 +466,7 @@ export default function Schedule() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-0 relative overflow-y-auto max-h-[350px] md:max-h-[550px]">
+            <CardContent className="p-0 relative overflow-y-auto max-h-[300px] sm:max-h-[350px] md:max-h-[550px]">
               {viewMode === 'day' ? (
                 <>
                   <div className="absolute left-12 md:left-16 top-0 bottom-0 w-px bg-white/5 z-0" />
