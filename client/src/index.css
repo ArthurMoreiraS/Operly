@@ -154,7 +154,7 @@
 }
 
 /* Custom dialog animations */
-.dialog-overlay {
+.dialog-overlay[data-state="open"] {
   animation: fade-in 150ms ease-out;
 }
 
@@ -162,7 +162,7 @@
   animation: fade-out 100ms ease-in;
 }
 
-.dialog-content {
+.dialog-content[data-state="open"] {
   animation: fade-in 150ms ease-out;
 }
 
