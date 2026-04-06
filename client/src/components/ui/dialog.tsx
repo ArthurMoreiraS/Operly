@@ -38,9 +38,9 @@ const DialogContent = React.forwardRef<
       className={cn(
         "dialog-content fixed z-50 grid w-full gap-4 border bg-background p-4 sm:p-6 shadow-lg",
         // Mobile: fullscreen
-        "inset-0 max-h-screen overflow-y-auto",
+        "top-0 left-0 right-0 bottom-0 max-h-screen overflow-y-auto",
         // Desktop: centered modal
-        "sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:inset-auto sm:max-w-lg sm:max-h-[90vh] sm:rounded-lg",
+        "sm:top-[50%] sm:left-[50%] sm:right-auto sm:bottom-auto sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-lg sm:max-h-[90vh] sm:rounded-lg",
         className
       )}
       {...props}
