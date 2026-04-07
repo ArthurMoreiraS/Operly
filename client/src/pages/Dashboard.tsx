@@ -120,11 +120,21 @@ export default function Dashboard() {
                 R$ {stats?.todayRevenue?.toFixed(2) || '0.00'}
               </div>
               <div className="flex items-center text-xs">
-                <span className="text-emerald-400 flex items-center">
-                  <ArrowUpRight className="h-3 w-3 mr-1" />
-                  +12%
-                </span>
-                <span className="text-gray-500 ml-2">vs. ontem</span>
+                {stats?.revenueChange !== undefined && stats?.revenueChange !== 0 ? (
+                  <>
+                    <span className={`flex items-center ${stats.revenueChange > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {stats.revenueChange > 0 ? (
+                        <ArrowUpRight className="h-3 w-3 mr-1" />
+                      ) : (
+                        <ArrowDownRight className="h-3 w-3 mr-1" />
+                      )}
+                      {stats.revenueChange > 0 ? '+' : ''}{stats.revenueChange}%
+                    </span>
+                    <span className="text-gray-500 ml-2">vs. ontem</span>
+                  </>
+                ) : (
+                  <span className="text-gray-400">sem dados de ontem</span>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -141,11 +151,21 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold text-white mb-1">{stats?.todayAppointments || 0}</div>
               <div className="flex items-center text-xs">
-                <span className="text-emerald-400 flex items-center">
-                  <ArrowUpRight className="h-3 w-3 mr-1" />
-                  +4
-                </span>
-                <span className="text-gray-500 ml-2">vs. ontem</span>
+                {stats?.appointmentsChange !== undefined && stats?.appointmentsChange !== 0 ? (
+                  <>
+                    <span className={`flex items-center ${stats.appointmentsChange > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {stats.appointmentsChange > 0 ? (
+                        <ArrowUpRight className="h-3 w-3 mr-1" />
+                      ) : (
+                        <ArrowDownRight className="h-3 w-3 mr-1" />
+                      )}
+                      {stats.appointmentsChange > 0 ? '+' : ''}{stats.appointmentsChange}
+                    </span>
+                    <span className="text-gray-500 ml-2">vs. ontem</span>
+                  </>
+                ) : (
+                  <span className="text-gray-400">igual a ontem</span>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -284,13 +304,31 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-red-200">Nenhum atraso no momento</p>
-                  <p className="text-xs text-red-300/70 mt-1">Operação dentro do prazo!</p>
+              {stats?.delayedAppointments && stats.delayedAppointments.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.delayedAppointments.map((delay: any) => (
+                    <div key={delay.id} className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-red-200">
+                          Agendamento atrasado
+                        </p>
+                        <p className="text-xs text-red-300/70 mt-1">
+                          {delay.delayMinutes} min de atraso • {format(new Date(delay.scheduledAt), 'HH:mm', { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-emerald-200">Nenhum atraso no momento</p>
+                    <p className="text-xs text-emerald-300/70 mt-1">Operação dentro do prazo!</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>

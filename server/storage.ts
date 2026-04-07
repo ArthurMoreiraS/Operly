@@ -454,10 +454,15 @@ export class DrizzleStorage implements IStorage {
 
   // Dashboard statistics
   async getDashboardStats(businessId: number): Promise<any> {
+    const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Yesterday's date range
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
 
     const todayAppointments = await this.db
       .select()
@@ -467,6 +472,18 @@ export class DrizzleStorage implements IStorage {
           eq(appointments.businessId, businessId),
           gte(appointments.scheduledAt, today),
           lte(appointments.scheduledAt, tomorrow)
+        )
+      );
+
+    // Yesterday's appointments count
+    const yesterdayAppointments = await this.db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.businessId, businessId),
+          gte(appointments.scheduledAt, yesterday),
+          lte(appointments.scheduledAt, today)
         )
       );
 
@@ -482,7 +499,29 @@ export class DrizzleStorage implements IStorage {
         )
       );
 
+    // Yesterday's orders
+    const yesterdayOrders = await this.db
+      .select()
+      .from(serviceOrders)
+      .where(
+        and(
+          eq(serviceOrders.businessId, businessId),
+          gte(serviceOrders.createdAt, yesterday),
+          lte(serviceOrders.createdAt, today),
+          eq(serviceOrders.paymentStatus, "paid")
+        )
+      );
+
     const todayRevenue = todayOrders.reduce((sum, order) => sum + parseFloat(order.amount), 0);
+    const yesterdayRevenue = yesterdayOrders.reduce((sum, order) => sum + parseFloat(order.amount), 0);
+
+    // Calculate percentage change for revenue
+    const revenueChange = yesterdayRevenue > 0 
+      ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
+      : todayRevenue > 0 ? 100 : 0;
+
+    // Calculate change for appointments
+    const appointmentsChange = todayAppointments.length - yesterdayAppointments.length;
 
     const weekAgo = new Date(today);
     weekAgo.setDate(weekAgo.getDate() - 7);
@@ -537,13 +576,38 @@ export class DrizzleStorage implements IStorage {
       });
     }
 
+    // Calculate delayed appointments (in-progress appointments past their scheduled end time)
+    const delayedAppointments = todayAppointments.filter(apt => {
+      if (apt.status !== 'in-progress') return false;
+      const scheduledEnd = new Date(apt.scheduledAt);
+      scheduledEnd.setMinutes(scheduledEnd.getMinutes() + (apt.duration || 60));
+      return now > scheduledEnd;
+    }).map(apt => {
+      const scheduledEnd = new Date(apt.scheduledAt);
+      scheduledEnd.setMinutes(scheduledEnd.getMinutes() + (apt.duration || 60));
+      const delayMinutes = Math.round((now.getTime() - scheduledEnd.getTime()) / 60000);
+      return {
+        id: apt.id,
+        scheduledAt: apt.scheduledAt,
+        delayMinutes,
+        customerId: apt.customerId,
+        vehicleId: apt.vehicleId,
+        serviceId: apt.serviceId
+      };
+    });
+
     return {
       todayAppointments: todayAppointments.length,
+      yesterdayAppointments: yesterdayAppointments.length,
+      appointmentsChange,
       todayRevenue,
+      yesterdayRevenue,
+      revenueChange,
       weeklyRevenue,
       ticketMedio,
       weeklyData,
       appointmentsList: todayAppointments,
+      delayedAppointments,
     };
   }
 
